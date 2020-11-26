@@ -1,0 +1,12 @@
+dependencies {
+    api "io.github.openfeign:feign-okhttp"
+    api "org.springframework.cloud:spring-cloud-starter-openfeign"
+
+    api "io.github.openfeign.form:feign-form"
+    api "io.github.openfeign.form:feign-form-spring"
+
+    //Feign Decoder坑: https://mp.weixin.qq.com/s/6JPSZpskQ_HNj70sSC5JQw
+    api 'com.fasterxml.jackson.datatype:jackson-datatype-joda'
+
+    api "com.alibaba.cloud:spring-cloud-starter-alibaba-sentinel"
+}

@@ -18,6 +18,7 @@ dependencies {
     api "com.fasterxml.jackson.core:jackson-databind"
     api "com.fasterxml.jackson.core:jackson-core"
     api "com.fasterxml.jackson.core:jackson-annotations"
+    api "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
 
     api "org.aspectj:aspectjrt"
     api "org.aspectj:aspectjweaver"
@@ -29,7 +30,6 @@ dependencies {
 
     api "org.hibernate.validator:hibernate-validator"
 
-    api "com.timgroup:java-statsd-client"
     api "io.micrometer:micrometer-core"
 
     api "redis.clients:jedis"
@@ -95,8 +95,6 @@ dependencies {
     api "com.alibaba:druid"
 
     api "org.redisson:redisson"
-
-    api "it.sauronsoftware.ftp4j:ftp4j"
 
     api("com.squareup.retrofit2:retrofit") {
         exclude(group: 'com.squareup.okhttp3', module: 'okhttp')

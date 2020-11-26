@@ -1,7 +1,0 @@
-dependencies {
-    api "io.github.openfeign:feign-okhttp"
-    api "org.springframework.cloud:spring-cloud-starter-openfeign"
-
-    api "io.github.openfeign.form:feign-form"
-    api "io.github.openfeign.form:feign-form-spring"
-}
