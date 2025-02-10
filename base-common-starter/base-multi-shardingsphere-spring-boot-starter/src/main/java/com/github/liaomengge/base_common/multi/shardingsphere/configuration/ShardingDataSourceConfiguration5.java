@@ -11,8 +11,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.shardingsphere.api.config.masterslave.MasterSlaveRuleConfiguration;
-import org.apache.shardingsphere.core.exception.ShardingException;
 import org.apache.shardingsphere.shardingjdbc.api.MasterSlaveDataSourceFactory;
+import org.apache.shardingsphere.underlying.common.exception.ShardingSphereException;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -48,19 +48,19 @@ public class ShardingDataSourceConfiguration5 extends AbstractShardingDataSource
     private final Map<String, DataSource> dataSourceMap = new LinkedHashMap<>();
 
     @Bean("shardingSphereProperties5")
-    @ConfigurationProperties(prefix = "base.shardingsphere.five")
+    @ConfigurationProperties("base.shardingsphere.five")
     public ShardingSphereProperties shardingSphereProperties5() {
         return new ShardingSphereProperties();
     }
 
     @Bean("pageHelperProperties5")
-    @ConfigurationProperties(prefix = "base.shardingsphere.five.mybatis.pagehelper")
+    @ConfigurationProperties("base.shardingsphere.five.mybatis.pagehelper")
     public Properties pageHelperProperties5() {
         return new Properties();
     }
 
     @Bean("flowProperties5")
-    @ConfigurationProperties(prefix = "base.shardingsphere.five.mybatis.flow")
+    @ConfigurationProperties("base.shardingsphere.five.mybatis.flow")
     public Properties flowProperties5() {
         return new Properties();
     }
@@ -97,7 +97,7 @@ public class ShardingDataSourceConfiguration5 extends AbstractShardingDataSource
         String prefix = "base.shardingsphere.five.datasource.";
         List<String> dataSourceNames = getDataSourceNames(environment, prefix);
         if (CollectionUtils.isEmpty(dataSourceNames)) {
-            throw new ShardingException("datasource couldn't null");
+            throw new ShardingSphereException("datasource couldn't null");
         }
         String masterDataSourceName = dataSourceNames.get(0);
         List<String> slaveDataSourceNames;
@@ -165,9 +165,9 @@ public class ShardingDataSourceConfiguration5 extends AbstractShardingDataSource
             try {
                 dataSourceMap.put(each, getDataSource(environment, prefix, each));
             } catch (ReflectiveOperationException ex) {
-                throw new ShardingException("Can't find five datasource type!", ex);
+                throw new ShardingSphereException("Can't find five datasource type!", ex);
             } catch (NamingException namingEx) {
-                throw new ShardingException("Can't find JNDI five datasource!", namingEx);
+                throw new ShardingSphereException("Can't find JNDI five datasource!", namingEx);
             }
         }
     }

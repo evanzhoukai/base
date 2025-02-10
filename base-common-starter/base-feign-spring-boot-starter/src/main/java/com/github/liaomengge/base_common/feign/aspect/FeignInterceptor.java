@@ -3,21 +3,23 @@ package com.github.liaomengge.base_common.feign.aspect;
 import com.github.liaomengge.base_common.feign.FeignProperties;
 import com.github.liaomengge.base_common.feign.pojo.FeignLogInfo;
 import com.github.liaomengge.base_common.feign.util.FeignLogUtil;
+import com.github.liaomengge.base_common.support.logger.JsonLogger;
 import com.github.liaomengge.base_common.support.threadlocal.ThreadLocalContextUtils;
 import com.github.liaomengge.base_common.utils.error.LyThrowableUtil;
 import com.github.liaomengge.base_common.utils.json.LyJsonUtil;
-import com.github.liaomengge.base_common.utils.log.LyMDCUtil;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
-import com.github.liaomengge.base_common.utils.web.LyWebUtil;
+import com.github.liaomengge.base_common.utils.mdc.LyMDCUtil;
+import com.github.liaomengge.base_common.utils.threadlocal.LyThreadLocalUtil;
+import com.github.liaomengge.base_common.utils.web.LyWebAopUtil;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import org.slf4j.Logger;
-import org.springframework.core.NamedThreadLocal;
+import org.springframework.core.Ordered;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.liaomengge.base_common.feign.consts.FeignConst.FEIGN_LOG_INFO_THREAD_CONTEXT;
@@ -25,12 +27,12 @@ import static com.github.liaomengge.base_common.feign.consts.FeignConst.FEIGN_LO
 /**
  * Created by liaomengge on 2020/10/31.
  */
-public class FeignInterceptor implements MethodInterceptor, RequestInterceptor {
+public class FeignInterceptor implements MethodInterceptor, RequestInterceptor, Ordered {
 
-    private static final Logger log = LyLogger.getInstance(FeignInterceptor.class);
+    private static final JsonLogger log = JsonLogger.getInstance(FeignInterceptor.class);
 
-    private static ThreadLocal<Map<String, Object>> feignLogInfoThreadContextMap =
-            new NamedThreadLocal("FEIGN_LOG_INFO_THREAD_CONTEXT_MAP");
+    private static ThreadLocal<Map<String, Object>> FEIGN_LOG_INFO_THREAD_LOCAL =
+            LyThreadLocalUtil.getNamedThreadLocal("feign-log-info", HashMap::new);
 
     private final FeignProperties feignProperties;
 
@@ -47,7 +49,7 @@ public class FeignInterceptor implements MethodInterceptor, RequestInterceptor {
         String classMethod = '[' + method.getDeclaringClass().getSimpleName() + '#' + method.getName() + ']';
         logInfo.setClassMethod(classMethod);
         if (!FeignLogUtil.isIgnoreLogRequest(method.getName(), feignProperties)) {
-            logInfo.setRequestBody(LyWebUtil.getRequestParams(method, args));
+            logInfo.setRequestBody(LyWebAopUtil.getRequestParams(method, args));
         }
         boolean isSuccess = false;
         Object result = null;
@@ -59,16 +61,20 @@ public class FeignInterceptor implements MethodInterceptor, RequestInterceptor {
             throw t;
         } finally {
             try {
-                FeignLogInfo threadLocalLogInfo = ThreadLocalContextUtils.get(feignLogInfoThreadContextMap,
+                FeignLogInfo threadLocalLogInfo = ThreadLocalContextUtils.get(FEIGN_LOG_INFO_THREAD_LOCAL,
                         FEIGN_LOG_INFO_THREAD_CONTEXT);
-                logInfo.setUrl(threadLocalLogInfo.getUrl());
-                logInfo.setHttpMethod(threadLocalLogInfo.getHttpMethod());
-                if (!FeignLogUtil.isIgnoreLogHeader(method.getName(), feignProperties)) {
-                    logInfo.setHeaderParams(threadLocalLogInfo.getHeaderParams());
+                if (Objects.nonNull(threadLocalLogInfo)) {
+                    logInfo.setUrl(threadLocalLogInfo.getUrl());
+                    logInfo.setHttpMethod(threadLocalLogInfo.getHttpMethod());
+                    if (!FeignLogUtil.isIgnoreLogHeader(method.getName(), feignProperties)) {
+                        logInfo.setHeaderParams(threadLocalLogInfo.getHeaderParams());
+                    }
+                    if (!FeignLogUtil.isIgnoreLogResponse(method.getName(), feignProperties)) {
+                        logInfo.setQueryParams(threadLocalLogInfo.getQueryParams());
+                    }
                 }
                 if (!FeignLogUtil.isIgnoreLogResponse(method.getName(), feignProperties)) {
                     logInfo.setResponseBody(result);
-                    logInfo.setQueryParams(threadLocalLogInfo.getQueryParams());
                 }
                 long elapsedTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanoTime);
                 logInfo.setElapsedTime(elapsedTime);
@@ -80,7 +86,7 @@ public class FeignInterceptor implements MethodInterceptor, RequestInterceptor {
                 }
             } finally {
                 LyMDCUtil.remove(LyMDCUtil.MDC_CLIENT_ELAPSED_MILLI_TIME);
-                ThreadLocalContextUtils.remove(feignLogInfoThreadContextMap);
+                ThreadLocalContextUtils.remove(FEIGN_LOG_INFO_THREAD_LOCAL);
             }
         }
         return result;
@@ -92,6 +98,11 @@ public class FeignInterceptor implements MethodInterceptor, RequestInterceptor {
         feignLogInfo.setUrl(template.url());
         feignLogInfo.setHttpMethod(template.method());
         feignLogInfo.setQueryParams(template.queries());
-        ThreadLocalContextUtils.put(feignLogInfoThreadContextMap, FEIGN_LOG_INFO_THREAD_CONTEXT, feignLogInfo);
+        ThreadLocalContextUtils.put(FEIGN_LOG_INFO_THREAD_LOCAL, FEIGN_LOG_INFO_THREAD_CONTEXT, feignLogInfo);
+    }
+
+    @Override
+    public int getOrder() {
+        return 10;
     }
 }

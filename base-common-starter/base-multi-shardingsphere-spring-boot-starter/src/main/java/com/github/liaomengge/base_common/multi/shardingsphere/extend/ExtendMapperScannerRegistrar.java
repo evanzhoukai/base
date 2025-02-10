@@ -79,8 +79,8 @@ public class ExtendMapperScannerRegistrar implements ImportBeanDefinitionRegistr
                 basePackages.addAll(this.parsePlaceHolder(pkg));
             }
         }
-        for (Class<?> clz : annoAttrs.getClassArray("basePackageClasses")) {
-            basePackages.add(ClassUtils.getPackageName(clz));
+        for (Class<?> clazz : annoAttrs.getClassArray("basePackageClasses")) {
+            basePackages.add(ClassUtils.getPackageName(clazz));
         }
         //优先级 mapperHelperRef > properties > springboot
         String mapperHelperRef = annoAttrs.getString("mapperHelperRef");
@@ -102,6 +102,7 @@ public class ExtendMapperScannerRegistrar implements ImportBeanDefinitionRegistr
         scanner.doScan(StringUtils.toStringArray(basePackages));
     }
 
+    //或者直接通过environment.resolvePlaceholders()解析对应的值
     private List<String> parsePlaceHolder(String pkg) {
         if (Objects.nonNull(pkg) && pkg.contains(PropertySourcesPlaceholderConfigurer.DEFAULT_PLACEHOLDER_PREFIX)) {
             String key = pkg.substring(2, pkg.length() - 1);

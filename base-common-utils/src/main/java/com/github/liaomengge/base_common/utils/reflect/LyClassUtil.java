@@ -1,11 +1,6 @@
 package com.github.liaomengge.base_common.utils.reflect;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.*;
-
+import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -13,7 +8,11 @@ import org.apache.commons.lang3.Validate;
 import org.springframework.core.BridgeMethodResolver;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 
-import lombok.experimental.UtilityClass;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.*;
 
 /**
  * Created by liaomengge on 17/11/25.
@@ -25,15 +24,15 @@ public class LyClassUtil {
 
     private final Map<Class<?>, Class<?>> primitiveWrapperTypeMap = new IdentityHashMap<>(8);
 
-    {
+    static {
         primitiveWrapperTypeMap.put(Boolean.class, Boolean.TYPE);
-        LyClassUtil.primitiveWrapperTypeMap.put(Byte.class, Byte.TYPE);
-        LyClassUtil.primitiveWrapperTypeMap.put(Character.class, Character.TYPE);
-        LyClassUtil.primitiveWrapperTypeMap.put(Double.class, Double.TYPE);
-        LyClassUtil.primitiveWrapperTypeMap.put(Float.class, Float.TYPE);
-        LyClassUtil.primitiveWrapperTypeMap.put(Integer.class, Integer.TYPE);
-        LyClassUtil.primitiveWrapperTypeMap.put(Long.class, Long.TYPE);
-        LyClassUtil.primitiveWrapperTypeMap.put(Short.class, Short.TYPE);
+        primitiveWrapperTypeMap.put(Byte.class, Byte.TYPE);
+        primitiveWrapperTypeMap.put(Character.class, Character.TYPE);
+        primitiveWrapperTypeMap.put(Double.class, Double.TYPE);
+        primitiveWrapperTypeMap.put(Float.class, Float.TYPE);
+        primitiveWrapperTypeMap.put(Integer.class, Integer.TYPE);
+        primitiveWrapperTypeMap.put(Long.class, Long.TYPE);
+        primitiveWrapperTypeMap.put(Short.class, Short.TYPE);
     }
 
     private final String SETTER_PREFIX = "set";
@@ -158,15 +157,15 @@ public class LyClassUtil {
      * <p>
      * from org.unitils.util.AnnotationUtils
      */
-    public <T extends Annotation> Set<Field> getAnnotatedPublicFields(Class<? extends Object> clz,
+    public <T extends Annotation> Set<Field> getAnnotatedPublicFields(Class<? extends Object> clazz,
                                                                       Class<T> annotation) {
 
-        if (Object.class.equals(clz)) {
+        if (Object.class.equals(clazz)) {
             return Collections.emptySet();
         }
 
         Set<Field> annotatedFields = new HashSet<>();
-        Field[] fields = clz.getFields();
+        Field[] fields = clazz.getFields();
 
         for (Field field : fields) {
             if (field.getAnnotation(annotation) != null) {
@@ -184,19 +183,19 @@ public class LyClassUtil {
      * <p>
      * from org.unitils.util.AnnotationUtils
      */
-    public <T extends Annotation> Set<Field> getAnnotatedFields(Class<? extends Object> clz,
+    public <T extends Annotation> Set<Field> getAnnotatedFields(Class<? extends Object> clazz,
                                                                 Class<T> annotation) {
-        if (Object.class.equals(clz)) {
+        if (Object.class.equals(clazz)) {
             return Collections.emptySet();
         }
         Set<Field> annotatedFields = new HashSet<>();
-        Field[] fields = clz.getDeclaredFields();
+        Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
             if (field.getAnnotation(annotation) != null) {
                 annotatedFields.add(field);
             }
         }
-        annotatedFields.addAll(getAnnotatedFields(clz.getSuperclass(), annotation));
+        annotatedFields.addAll(getAnnotatedFields(clazz.getSuperclass(), annotation));
         return annotatedFields;
     }
 
@@ -207,17 +206,17 @@ public class LyClassUtil {
      * <p>
      * 另, 如果子类重载父类的公共函数, 父类函数上的annotation不会继承, 只有接口上的annotation会被继承.
      */
-    public <T extends Annotation> Set<Method> getAnnotatedPublicMethods(Class<?> clz, Class<T> annotation) {
+    public <T extends Annotation> Set<Method> getAnnotatedPublicMethods(Class<?> clazz, Class<T> annotation) {
         // 已递归到Objebt.class, 停止递归
-        if (Object.class.equals(clz)) {
+        if (Object.class.equals(clazz)) {
             return Collections.emptySet();
         }
 
-        List<Class<?>> ifcs = ClassUtils.getAllInterfaces(clz);
+        List<Class<?>> ifcs = ClassUtils.getAllInterfaces(clazz);
         Set<Method> annotatedMethods = new HashSet<>();
 
         // 遍历当前类的所有公共方法
-        Method[] methods = clz.getMethods();
+        Method[] methods = clazz.getMethods();
 
         for (Method method : methods) {
             // 如果当前方法有标注, 或定义了该方法的所有接口有标注
@@ -249,23 +248,23 @@ public class LyClassUtil {
     /**
      * 循环遍历, 按属性名获取前缀为get或is的函数, 并设为可访问
      */
-    public Method getSetterMethod(Class<?> clz, String propertyName, Class<?> parameterType) {
+    public Method getSetterMethod(Class<?> clazz, String propertyName, Class<?> parameterType) {
         String setterMethodName = LyClassUtil.SETTER_PREFIX + StringUtils.capitalize(propertyName);
-        return LyClassUtil.getAccessibleMethod(clz, setterMethodName, parameterType);
+        return LyClassUtil.getAccessibleMethod(clazz, setterMethodName, parameterType);
     }
 
     /**
      * 循环遍历, 按属性名获取前缀为set的函数, 并设为可访问
      */
-    public Method getGetterMethod(Class<?> clz, String propertyName) {
+    public Method getGetterMethod(Class<?> clazz, String propertyName) {
         String getterMethodName = LyClassUtil.GETTER_PREFIX + StringUtils.capitalize(propertyName);
 
-        Method method = LyClassUtil.getAccessibleMethod(clz, getterMethodName);
+        Method method = LyClassUtil.getAccessibleMethod(clazz, getterMethodName);
 
         // retry on another name
         if (method == null) {
             getterMethodName = LyClassUtil.IS_PREFIX + StringUtils.capitalize(propertyName);
-            method = LyClassUtil.getAccessibleMethod(clz, getterMethodName);
+            method = LyClassUtil.getAccessibleMethod(clazz, getterMethodName);
         }
         return method;
     }
@@ -277,10 +276,10 @@ public class LyClassUtil {
      * <p>
      * 因为class.getFiled(); 不能获取父类的private函数, 因此采用循环向上的getDeclaredField();
      */
-    public Field getAccessibleField(Class clz, String fieldName) {
-        Validate.notNull(clz, "clz can't be null");
+    public Field getAccessibleField(Class clazz, String fieldName) {
+        Validate.notNull(clazz, "clazz can't be null");
         Validate.notEmpty(fieldName, "fieldName can't be blank");
-        for (Class<?> superClass = clz; superClass != Object.class; superClass = superClass.getSuperclass()) {
+        for (Class<?> superClass = clazz; superClass != Object.class; superClass = superClass.getSuperclass()) {
             try {
                 Field field = superClass.getDeclaredField(fieldName);
                 LyClassUtil.makeAccessible(field);
@@ -301,16 +300,16 @@ public class LyClassUtil {
      * <p>
      * 因为class.getMethod() 不能获取父类的private函数, 因此采用循环向上的getDeclaredMethod();
      */
-    public Method getAccessibleMethod(Class<?> clz, String methodName,
+    public Method getAccessibleMethod(Class<?> clazz, String methodName,
                                       Class<?>... parameterTypes) {
-        Validate.notNull(clz, "class can't be null");
+        Validate.notNull(clazz, "class can't be null");
         Validate.notEmpty(methodName, "methodName can't be blank");
         Class[] theParameterTypes = ArrayUtils.nullToEmpty(parameterTypes);
 
         // 处理原子类型与对象类型的兼容
         LyClassUtil.wrapClassses(theParameterTypes);
 
-        for (Class<?> searchType = clz; searchType != Object.class; searchType = searchType.getSuperclass()) {
+        for (Class<?> searchType = clazz; searchType != Object.class; searchType = searchType.getSuperclass()) {
             try {
                 Method method = searchType.getDeclaredMethod(methodName, theParameterTypes);
                 LyClassUtil.makeAccessible(method);
@@ -333,11 +332,11 @@ public class LyClassUtil {
      * <p>
      * 因为class.getMethods() 不能获取父类的private函数, 因此采用循环向上的getMethods();
      */
-    public Method getAccessibleMethodByName(Class clz, String methodName) {
-        Validate.notNull(clz, "clz can't be null");
+    public Method getAccessibleMethodByName(Class clazz, String methodName) {
+        Validate.notNull(clazz, "clazz can't be null");
         Validate.notEmpty(methodName, "methodName can't be blank");
 
-        for (Class<?> searchType = clz; searchType != Object.class; searchType = searchType.getSuperclass()) {
+        for (Class<?> searchType = clazz; searchType != Object.class; searchType = searchType.getSuperclass()) {
             Method[] methods = searchType.getDeclaredMethods();
             for (Method method : methods) {
                 if (method.getName().equals(methodName)) {
@@ -419,14 +418,14 @@ public class LyClassUtil {
      */
     public Class<?> unwrapCglib(Object instance) {
         Validate.notNull(instance, "Instance must not be null");
-        Class<?> clz = instance.getClass();
-        if ((clz != null) && clz.getName().contains(CGLIB_CLASS_SEPARATOR)) {
-            Class<?> superClass = clz.getSuperclass();
+        Class<?> clazz = instance.getClass();
+        if ((clazz != null) && clazz.getName().contains(CGLIB_CLASS_SEPARATOR)) {
+            Class<?> superClass = clazz.getSuperclass();
             if ((superClass != null) && !Object.class.equals(superClass)) {
                 return superClass;
             }
         }
-        return clz;
+        return clazz;
     }
 
     /**

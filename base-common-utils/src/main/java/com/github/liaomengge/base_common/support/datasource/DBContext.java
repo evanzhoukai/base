@@ -1,6 +1,7 @@
 package com.github.liaomengge.base_common.support.datasource;
 
 import com.github.liaomengge.base_common.support.datasource.enums.DbType;
+import com.github.liaomengge.base_common.utils.threadlocal.LyThreadLocalUtil;
 
 /**
  * Created by liaomengge on 16/4/11.
@@ -8,10 +9,10 @@ import com.github.liaomengge.base_common.support.datasource.enums.DbType;
 
 public class DBContext {
 
-    private static final ThreadLocal<DbType> tlDbKey = new ThreadLocal<>();
+    private static ThreadLocal<DbType> DB_TYPE_THREAD_LOCAL = LyThreadLocalUtil.getNamedThreadLocal("enum-db-type");
 
     public static DbType getDBKey() {
-        DbType tlDbType = tlDbKey.get();
+        DbType tlDbType = DB_TYPE_THREAD_LOCAL.get();
         return tlDbType == null ? DbType.MASTER : tlDbType;
     }
 
@@ -20,10 +21,10 @@ public class DBContext {
             throw new IllegalArgumentException("数据源类型不能为空!!!");
 
         }
-        tlDbKey.set(dbKey);
+        DB_TYPE_THREAD_LOCAL.set(dbKey);
     }
 
     public static void clearDBKey() {
-        tlDbKey.remove();
+        DB_TYPE_THREAD_LOCAL.remove();
     }
 }

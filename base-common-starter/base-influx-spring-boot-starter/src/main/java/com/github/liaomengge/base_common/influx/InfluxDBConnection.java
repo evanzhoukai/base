@@ -1,9 +1,9 @@
 package com.github.liaomengge.base_common.influx;
 
 import com.github.liaomengge.base_common.influx.consts.InfluxConst;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import com.github.liaomengge.base_common.utils.thread.LyThreadFactoryBuilderUtil;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import org.influxdb.BatchOptions;
@@ -11,7 +11,6 @@ import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.Query;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
@@ -21,9 +20,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by liaomengge on 2020/7/21.
  */
+@Slf4j
 public class InfluxDBConnection {
-
-    private static final Logger log = LyLogger.getInstance(InfluxDBConnection.class);
 
     @Getter
     private InfluxDB influxDB;
@@ -47,9 +45,9 @@ public class InfluxDBConnection {
             try {
                 InfluxDBProperties.AdditionalConfig additionalConfig = influxDBProperties.getAdditionalConfig();
                 OkHttpClient.Builder builder = new OkHttpClient.Builder();
-                builder.connectTimeout(additionalConfig.getConnectTimeout().getSeconds(), TimeUnit.SECONDS)
-                        .readTimeout(additionalConfig.getReadTimeout().getSeconds(), TimeUnit.SECONDS)
-                        .writeTimeout(additionalConfig.getWriteTimeout().getSeconds(), TimeUnit.SECONDS)
+                builder.connectTimeout(additionalConfig.getConnectTimeout().toMillis(), TimeUnit.MILLISECONDS)
+                        .readTimeout(additionalConfig.getReadTimeout().toMillis(), TimeUnit.MILLISECONDS)
+                        .writeTimeout(additionalConfig.getWriteTimeout().toMillis(), TimeUnit.MILLISECONDS)
                         .retryOnConnectionFailure(true)
                         .connectionPool(new ConnectionPool(additionalConfig.getMaxConnections(), 5L, TimeUnit.MINUTES));
                 influxDB = InfluxDBFactory.connect(influxDBProperties.getUrl(), influxDBProperties.getUsername(),
@@ -97,7 +95,7 @@ public class InfluxDBConnection {
             influxDB.close();
         }
     }
-    
+
     private void createDatabase(String database) {
         influxDB.query(new Query("CREATE DATABASE " + database, ""));
     }

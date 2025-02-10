@@ -15,16 +15,37 @@ import java.util.List;
  * Created by liaomengge on 2019/11/6.
  */
 @Data
-@ConfigurationProperties(prefix = FrameworkConst.CONFIGURATION_PROPERTIES_PREFIX)
+@ConfigurationProperties(FrameworkConst.CONFIGURATION_PROPERTIES_PREFIX)
 public class FrameworkProperties {
 
+    private final ControllerAspectProperties controllerAspect = new ControllerAspectProperties();
+    private final ResponseBodyAdviceProperties responseBodyAdvice = new ResponseBodyAdviceProperties();
     private final SentinelProperties sentinel = new SentinelProperties();
+    private final RequestProperties request = new RequestProperties();
     private final CorsProperties cors = new CorsProperties();
     private final XssProperties xss = new XssProperties();
 
     @Data
+    public static class ControllerAspectProperties {
+        private String[] basePackages;
+    }
+
+    @Data
+    public static class ResponseBodyAdviceProperties {
+        private boolean enabled = false;
+        private String[] ignoreBasePackages;
+    }
+
+    @Data
     public static class SentinelProperties {
-        private boolean enabled;
+        private boolean enabled = false;
+    }
+
+    @Data
+    public static class RequestProperties {
+        private boolean enabled = true;
+        private int order = Ordered.LOWEST_PRECEDENCE;
+        private String[] urlPatterns = {"/*"};
     }
 
     @Data

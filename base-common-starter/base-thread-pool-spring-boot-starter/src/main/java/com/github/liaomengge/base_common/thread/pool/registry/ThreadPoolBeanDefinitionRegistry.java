@@ -3,6 +3,7 @@ package com.github.liaomengge.base_common.thread.pool.registry;
 import com.github.liaomengge.base_common.helper.concurrent.LyThreadPoolTaskExecutor;
 import com.github.liaomengge.base_common.helper.concurrent.LyThreadPoolTaskWrappedExecutor;
 import com.github.liaomengge.base_common.helper.concurrent.LyTtlThreadPoolTaskExecutor;
+import com.github.liaomengge.base_common.helper.concurrent.threadlocal.request.RequestContextRunnable;
 import com.github.liaomengge.base_common.thread.pool.ThreadPoolGroupProperties;
 import com.github.liaomengge.base_common.utils.binder.LyBinderUtil;
 import org.springframework.beans.BeansException;
@@ -42,10 +43,10 @@ public class ThreadPoolBeanDefinitionRegistry implements EnvironmentAware, BeanD
                 "base.thread-pool", ThreadPoolGroupProperties.class);
         Optional.ofNullable(threadPoolGroupProperties).map(ThreadPoolGroupProperties::getGroups).ifPresent(threadPoolPropertiesList -> {
             threadPoolPropertiesList.forEach(threadPoolProperties -> {
-                LyThreadPoolTaskExecutor LyThreadPoolTaskExecutor = buildThreadPool(threadPoolProperties);
+                LyThreadPoolTaskExecutor lyThreadPoolTaskExecutor = buildThreadPool(threadPoolProperties);
                 BeanDefinitionBuilder builder =
                         BeanDefinitionBuilder.genericBeanDefinition(LyThreadPoolTaskWrappedExecutor.class);
-                builder.addConstructorArgValue(LyThreadPoolTaskExecutor);
+                builder.addConstructorArgValue(lyThreadPoolTaskExecutor);
                 BeanDefinition beanDefinition = builder.getRawBeanDefinition();
                 ScopeMetadata scopeMetadata = scopeMetadataResolver.resolveScopeMetadata(beanDefinition);
                 beanDefinition.setScope(scopeMetadata.getScopeName());
@@ -79,9 +80,12 @@ public class ThreadPoolBeanDefinitionRegistry implements EnvironmentAware, BeanD
         threadPoolTaskExecutor.setQueueCapacity(threadPoolProperties.getQueueCapacity());
         threadPoolTaskExecutor.setBlockingQueue(threadPoolProperties.buildBlockingQueue());
         threadPoolTaskExecutor.setRejectedExecutionHandler(threadPoolProperties.buildRejectionPolicy());
+        if (threadPoolProperties.isRequestContextEnabled()) {
+            threadPoolTaskExecutor.setTaskDecorator(RequestContextRunnable::wrapRunnable);
+        }
 
-        threadPoolTaskExecutor.setCheckInterval(threadPoolProperties.getCheckInterval());
-        threadPoolTaskExecutor.setAwaitTerminationSeconds(threadPoolProperties.getAwaitTerminationSeconds());
+        threadPoolTaskExecutor.setCheckIntervalMillis(threadPoolProperties.getCheckIntervalMillis());
+        threadPoolTaskExecutor.setAwaitTerminationMillis(threadPoolProperties.getAwaitTerminationMillis());
         threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(threadPoolProperties.isWaitForTasksToCompleteOnShutdown());
         threadPoolTaskExecutor.setAllowCoreThreadTimeOut(threadPoolProperties.isAllowCoreThreadTimeOut());
 

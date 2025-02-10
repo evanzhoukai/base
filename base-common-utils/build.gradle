@@ -65,11 +65,11 @@ dependencies {
     api "org.apache.commons:commons-compress"
     api "org.apache.commons:commons-text"
     api "org.apache.commons:commons-collections4"
+    api "org.reflections:reflections"
 
     api "com.alibaba:fastjson"
     api "net.sourceforge.jexcelapi:jxl"
-
-    api "de.ruedigermoeller:fst"
+    
     api "com.dyuproject.protostuff:protostuff-core"
     api "com.dyuproject.protostuff:protostuff-runtime"
 

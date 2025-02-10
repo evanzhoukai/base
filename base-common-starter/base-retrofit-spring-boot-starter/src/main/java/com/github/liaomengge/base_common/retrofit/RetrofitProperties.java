@@ -9,10 +9,10 @@ import java.util.List;
  * Created by liaomengge on 2019/3/1.
  */
 @Data
-@ConfigurationProperties(prefix = "base.retrofit")
+@ConfigurationProperties("base.retrofit")
 public class RetrofitProperties {
 
-    private static final int DEFAULT_TIMEOUT_MILLIS = 5_000;//单位：毫秒
+    private static final long DEFAULT_TIMEOUT_MILLIS = 5_000;//单位：毫秒
     private static final long DEFAULT_KEEP_ALIVE_MIN = 5L;//单位：分钟
 
     private String projName = "base-retrofit";
@@ -23,12 +23,12 @@ public class RetrofitProperties {
 
     @Data
     public static class HttpClientProperties {
-        private int maxIdleConnections = 5;
+        private int maxIdleConnections = 128;
         private long keepAlive = DEFAULT_KEEP_ALIVE_MIN;
         private boolean enabledTraceHeader = true;
-        private int connectTimeout = DEFAULT_TIMEOUT_MILLIS;
-        private int readTimeout = DEFAULT_TIMEOUT_MILLIS;
-        private int writeTimeout = DEFAULT_TIMEOUT_MILLIS;
+        private long connectTimeout = DEFAULT_TIMEOUT_MILLIS;
+        private long readTimeout = DEFAULT_TIMEOUT_MILLIS;
+        private long writeTimeout = DEFAULT_TIMEOUT_MILLIS;
         private int retryCount = 3;
         private List<UrlHttpClientProperties> urls;
     }
@@ -36,9 +36,9 @@ public class RetrofitProperties {
     @Data
     public static class UrlHttpClientProperties {
         private String url;
-        private Integer connectTimeout;
-        private Integer readTimeout;
-        private Integer writeTimeout;
+        private Long connectTimeout;
+        private Long readTimeout;
+        private Long writeTimeout;
     }
 
     @Data

@@ -17,6 +17,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.Ordered;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.Order;
 
 import java.lang.reflect.Method;
@@ -44,7 +45,8 @@ public class CircuitBreakerResourceAspect extends AbstractAspectSupport {
         if (Objects.isNull(method)) {
             return joinPoint.proceed();
         }
-        CircuitBreakerResource circuitBreakerResource = method.getAnnotation(CircuitBreakerResource.class);
+        CircuitBreakerResource circuitBreakerResource =
+                AnnotatedElementUtils.findMergedAnnotation(method, CircuitBreakerResource.class);
         if (Objects.isNull(circuitBreakerResource)) {
             return joinPoint.proceed();
         }
@@ -61,7 +63,7 @@ public class CircuitBreakerResourceAspect extends AbstractAspectSupport {
                     //open status
                     log.warn("Resource[{}], Custom Circuit Open...", resource);
                     _MeterRegistrys.counter(meterRegistry,
-                            CircuitBreakerConst.Metric.CIRCUIT_BREAKER_PREFIX + resource).ifPresent(Counter::increment);
+                            CircuitBreakerConst.MetricConst.CIRCUIT_BREAKER_PREFIX + resource).ifPresent(Counter::increment);
                     return super.handleFallback(joinPoint, circuitBreakerResource);
                 }
                 //half open status
@@ -75,7 +77,7 @@ public class CircuitBreakerResourceAspect extends AbstractAspectSupport {
             log.warn("Resource[{}], request custom circuit handle failed ==> {}", resource,
                     LyThrowableUtil.getStackTrace(t));
             if (failureCount >= circuitBreakerRedisHelper.getCircuitBreakerConfig().getFailureThreshold()) {
-                circuitBreakerRedisHelper.getIRedisHelper().set(circuitBreakerRedisHelper.getLatestFailureTimeStr(resource),
+                circuitBreakerRedisHelper.getIRedisHelper().set(circuitBreakerRedisHelper.getLatestFailureTimeKey(resource),
                         String.valueOf(LyJdk8DateUtil.getMilliSecondsTime()));
                 throw t;
             }

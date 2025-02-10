@@ -1,11 +1,9 @@
 package com.github.liaomengge.base_common.utils.string;
 
 import com.google.common.base.MoreObjects;
-
+import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-
-import lombok.experimental.UtilityClass;
 
 /**
  * Created by liaomengge on 17/11/9.
@@ -15,6 +13,7 @@ public class LyToStringUtil {
 
     /**
      * 打印出子类和父类的属性, 效率略低
+     * 或者@ToString(callSuper = true)
      *
      * @param object
      * @return
@@ -24,12 +23,12 @@ public class LyToStringUtil {
     }
 
     /**
-     * 只打印子类的属性, 效率高
+     * 只打印父类的属性, 效率高
      *
      * @param object
      * @return
      */
-    public String toString2(Object object) {
+    public String toGuavaString(Object object) {
         return MoreObjects.toStringHelper(object.getClass().getSimpleName()).omitNullValues().addValue(object).toString();
     }
 

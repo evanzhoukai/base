@@ -65,7 +65,7 @@ public class CacheAutoConfiguration {
     }
 
     @Bean(name = "clusterRedissonClientManager", destroyMethod = "destroy")
-    @ConditionalOnMissingBean(RedissonHelper.class)
+    @ConditionalOnMissingBean
     public RedissonClientManager clusterRedissonClientManager() {
         Level2Properties level2Properties = this.cacheProperties.getLevel2();
         String clusterConfigLocation = level2Properties.getClusterConfigLocation();

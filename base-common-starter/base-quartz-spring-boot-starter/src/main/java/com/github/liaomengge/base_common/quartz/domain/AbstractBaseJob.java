@@ -1,9 +1,9 @@
 package com.github.liaomengge.base_common.quartz.domain;
 
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractBaseJob {
 
-    protected final Logger log = LyLogger.getInstance(AbstractBaseJob.class);
+    protected final Logger log = LoggerFactory.getLogger(AbstractBaseJob.class);
 
     @Getter
     @Setter
@@ -20,7 +20,7 @@ public abstract class AbstractBaseJob {
 
     protected void init() {
         //初始化动作
-        log.info("[" + getClass().getSimpleName() + "]开始执行...");
+        log.info("[{}]开始执行...", getClass().getSimpleName());
     }
 
     public abstract void work();
@@ -33,7 +33,7 @@ public abstract class AbstractBaseJob {
         try {
             work();
         } catch (Exception e) {
-            log.error("执行[" + getClass().getSimpleName() + "]异常", e);
+            log.error("执行[{}]异常", getClass().getSimpleName(), e);
         }
 
         long endTime = System.nanoTime();

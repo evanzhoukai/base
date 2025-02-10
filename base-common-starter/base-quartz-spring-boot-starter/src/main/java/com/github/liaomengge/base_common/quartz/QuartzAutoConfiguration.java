@@ -5,13 +5,12 @@ import com.github.liaomengge.base_common.helper.concurrent.LyThreadPoolTaskWrapp
 import com.github.liaomengge.base_common.quartz.listener.QuartzListener;
 import com.github.liaomengge.base_common.quartz.registry.QuartzBeanDefinitionRegistry;
 import com.github.liaomengge.base_common.quartz.registry.QuartzBeanRegistryConfiguration;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.CronTrigger;
 import org.quartz.JobDetail;
 import org.quartz.impl.JobDetailImpl;
-import org.slf4j.Logger;
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -31,13 +30,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Created by liaomengge on 2019/1/29.
  */
+@Slf4j
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(QuartzProperties.class)
 @ConditionalOnClass({JobDetail.class, CronTrigger.class, SchedulerFactoryBean.class})
 @Import(QuartzBeanRegistryConfiguration.class)
 public class QuartzAutoConfiguration {
-
-    private static final Logger log = LyLogger.getInstance(QuartzAutoConfiguration.class);
 
     private final CopyOnWriteArrayList triggerKeyList = Lists.newCopyOnWriteArrayList();
 
@@ -99,11 +97,11 @@ public class QuartzAutoConfiguration {
                 cronTriggerList.add(cronTrigger);
                 triggerKeyList.add(cronTrigger.getKey());
             } catch (Exception e) {
-                log.warn("load job trigger class[" + triggerName + "]fail!!!", e);
+                log.warn("load job trigger class[{}] fail!!!", triggerName, e);
             }
         }
         log.info("load job trigger(" + cronTriggerList.size() + ") ===> [" +
-                cronTriggerList.parallelStream().map(val -> val.getKey().getName()).reduce((val, val2) -> val + ',' + val2).orElse("") + "]");
+                cronTriggerList.stream().map(val -> val.getKey().getName()).reduce((val, val2) -> val + ',' + val2).orElse("") + "]");
         return cronTriggerList;
     }
 
@@ -111,8 +109,8 @@ public class QuartzAutoConfiguration {
         List<JobDetailImpl> jobDetailList = Lists.newArrayList();
         Map<String, Object> beanMap = QuartzBeanDefinitionRegistry.getJobBeanMap();
         if (beanMap.isEmpty()) {
-            log.warn("the package[" + this.quartzProperties.getBasePackage() + "]'s class don't exist or not " +
-                    "inherit AbstractBaseJob");
+            log.warn("the package[{}]'s class don't exist or not inherit AbstractBaseJob",
+                    this.quartzProperties.getBasePackage());
             return jobDetailList;
         }
         List<QuartzProperties.JobInfo> jobInfoList = this.quartzProperties.getJobs();
@@ -135,7 +133,7 @@ public class QuartzAutoConfiguration {
                 JobDetailImpl jobDetail = (JobDetailImpl) methodInvokingJobDetailFactoryBean.getObject();
                 jobDetailList.add(jobDetail);
             } catch (Exception e) {
-                log.warn("load job detail class[" + pkgClassName + "]fail!!!", e);
+                log.warn("load job detail class[{}] fail!!!", pkgClassName, e);
             }
         }
         return jobDetailList;

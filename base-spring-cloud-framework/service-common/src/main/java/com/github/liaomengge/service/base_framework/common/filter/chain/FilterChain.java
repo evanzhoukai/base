@@ -3,7 +3,8 @@ package com.github.liaomengge.service.base_framework.common.filter.chain;
 import com.github.liaomengge.base_common.utils.number.LyNumberUtil;
 import com.google.common.collect.Lists;
 import lombok.Getter;
-import org.aspectj.lang.ProceedingJoinPoint;
+import lombok.NoArgsConstructor;
+import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.core.annotation.OrderUtils;
 
 import java.util.Comparator;
@@ -15,10 +16,15 @@ import java.util.stream.Collectors;
  * Created by liaomengge on 2018/11/21.
  */
 @Getter
+@NoArgsConstructor
 public class FilterChain implements ServiceApiFilter {
 
     public List<ServiceApiFilter> filters = Lists.newArrayList();
     public int pos = 0;
+
+    public FilterChain(List<ServiceApiFilter> filters) {
+        this.filters = filters;
+    }
 
     public FilterChain cloneChain() {
         return new FilterChain().addFilter(getFilters());
@@ -65,10 +71,10 @@ public class FilterChain implements ServiceApiFilter {
     }
 
     @Override
-    public Object doFilter(ProceedingJoinPoint joinPoint, FilterChain chain) throws Throwable {
+    public Object doFilter(MethodInvocation invocation, FilterChain chain) throws Throwable {
         if (hasNextFilter()) {
-            return getFilters().get(pos++).doFilter(joinPoint, chain);
+            return getFilters().get(pos++).doFilter(invocation, chain);
         }
-        return joinPoint.proceed();
+        return invocation.proceed();
     }
 }

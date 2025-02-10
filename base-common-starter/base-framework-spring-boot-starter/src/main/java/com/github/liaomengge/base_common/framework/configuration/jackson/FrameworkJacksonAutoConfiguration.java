@@ -11,8 +11,8 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
-import com.github.liaomengge.base_common.framework.configuration.xss.XssJacksonDeserializer;
-import com.github.liaomengge.base_common.framework.configuration.xss.XssJacksonSerializer;
+import com.github.liaomengge.base_common.framework.configuration.xss.serializer.XssJacksonDeserializer;
+import com.github.liaomengge.base_common.framework.configuration.xss.serializer.XssJacksonSerializer;
 import com.github.liaomengge.base_common.utils.date.LyJdk8DateUtil;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
@@ -21,7 +21,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
@@ -31,7 +30,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Locale;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.TimeZone;
 
 /**
@@ -44,8 +43,7 @@ import java.util.TimeZone;
 public class FrameworkJacksonAutoConfiguration {
 
     private final Environment environment;
-
-    @Primary
+    
     @Bean
     @ConditionalOnMissingBean
     public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
@@ -71,14 +69,13 @@ public class FrameworkJacksonAutoConfiguration {
         simpleModule.addDeserializer(LocalDateTime.class,
                 new LocalDateTimeDeserializer(LyJdk8DateUtil.DATETIME_FORMATTER));
 
-        Optional.ofNullable(environment)
-                .map(val -> val.getProperty("base.framework.xss.enabled", Boolean.class))
-                .ifPresent(val -> {
-                    if (BooleanUtils.toBoolean(val)) {
-                        simpleModule.addSerializer(String.class, new XssJacksonSerializer());
-                        simpleModule.addDeserializer(String.class, new XssJacksonDeserializer());
-                    }
-                });
+        if (Objects.nonNull(environment)) {
+            Boolean xxsEnabled = environment.getProperty("base.framework.xss.enabled", Boolean.class);
+            if (BooleanUtils.toBoolean(xxsEnabled)) {
+                simpleModule.addSerializer(String.class, new XssJacksonSerializer());
+                simpleModule.addDeserializer(String.class, new XssJacksonDeserializer());
+            }
+        }
 
         objectMapper.registerModule(simpleModule);
         return objectMapper;

@@ -2,7 +2,6 @@ package com.github.liaomengge.base_common.framework.configuration.cors;
 
 import com.github.liaomengge.base_common.framework.FrameworkProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,11 +14,10 @@ import org.springframework.web.filter.CorsFilter;
  * Created by liaomengge on 2020/8/4.
  */
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnProperty(name = "base.framework.cors.enabled", havingValue = "true")
 public class FrameworkCorsConfiguration {
 
     @Bean("corsFilterRegistration")
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = "corsFilterRegistration")
     public FilterRegistrationBean corsFilterRegistration(FrameworkProperties frameworkProperties) {
         FrameworkProperties.CorsProperties corsProperties = frameworkProperties.getCors();
 
@@ -39,10 +37,11 @@ public class FrameworkCorsConfiguration {
         UrlBasedCorsConfigurationSource configSource = new UrlBasedCorsConfigurationSource();
         configSource.registerCorsConfiguration(corsProperties.getPath(), corsConfiguration);
 
-        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(new CorsFilter(configSource));
-        filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE);
-        filterRegistrationBean.setEnabled(corsProperties.isEnabled());
-        return filterRegistrationBean;
+        FilterRegistrationBean registration = new FilterRegistrationBean(new CorsFilter(configSource));
+        registration.setName("corsFilterRegistration");
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        registration.setEnabled(corsProperties.isEnabled());
+        return registration;
     }
 
 }

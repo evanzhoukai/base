@@ -2,9 +2,8 @@ package com.github.liaomengge.base_common.graceful.context;
 
 import com.github.liaomengge.base_common.graceful.GracefulProperties;
 import com.github.liaomengge.base_common.graceful.consts.GracefulConst;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.slf4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -20,9 +19,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by liaomengge on 2019/2/22.
  */
+@Slf4j
 public class ContextShutdown implements ApplicationListener<ContextClosedEvent>, ApplicationContextAware {
-
-    private static final Logger log = LyLogger.getInstance(ContextShutdown.class);
 
     private ApplicationContext applicationContext;
     private GracefulProperties gracefulProperties;
@@ -82,14 +80,14 @@ public class ContextShutdown implements ApplicationListener<ContextClosedEvent>,
                             break;
                         }
                     } catch (InterruptedException e) {
-                        log.warn("Interrupted while waiting for executor [" + threadName + "] to terminate");
+                        log.warn("Interrupted while waiting for executor [{}] to terminate", threadName);
                         Thread.currentThread().interrupt();
                     }
                     log.info("thread pool task executor[{}], {} thread(s) active, {} seconds remaining",
                             threadName, taskExecutor.getThreadPoolExecutor().getActiveCount(), remaining);
                 }
             } catch (Exception e) {
-                log.info("thread pool task executor[" + threadName + "] shutdown exception", e);
+                log.info("thread pool task executor[{}] shutdown exception", threadName, e);
             }
         }
         log.info("thread pool task executor[{}] shutdown end...", threadName);
@@ -107,14 +105,14 @@ public class ContextShutdown implements ApplicationListener<ContextClosedEvent>,
                             break;
                         }
                     } catch (InterruptedException e) {
-                        log.warn("Interrupted while waiting for executor [" + threadName + "] to terminate");
+                        log.warn("Interrupted while waiting for executor [{}] to terminate", threadName);
                         Thread.currentThread().interrupt();
                     }
                     log.info("thread pool task scheduler[{}], {} thread(s) active, {} seconds remaining",
                             threadName, taskScheduler.getScheduledThreadPoolExecutor().getActiveCount(), remaining);
                 }
             } catch (Exception e) {
-                log.info("thread pool task scheduler[" + threadName + "] shutdown exception", e);
+                log.info("thread pool task scheduler[{}] shutdown exception", threadName, e);
             }
         }
         log.info("thread pool task scheduler[{}] shutdown end...", threadName);
@@ -132,14 +130,14 @@ public class ContextShutdown implements ApplicationListener<ContextClosedEvent>,
                             break;
                         }
                     } catch (InterruptedException e) {
-                        log.warn("Interrupted while waiting for executor [" + threadName + "] to terminate");
+                        log.warn("Interrupted while waiting for executor [{}] to terminate", threadName);
                         Thread.currentThread().interrupt();
                     }
                     log.info("thread pool task scheduler[{}], {} thread(s) active, {} seconds remaining",
                             threadName, executor.getActiveCount(), remaining);
                 }
             } catch (Exception e) {
-                log.info("thread pool executor[" + threadName + "] shutdown exception", e);
+                log.info("thread pool executor[{}] shutdown exception", threadName, e);
             }
         }
         log.info("thread pool executor[{}] shutdown end...", threadName);

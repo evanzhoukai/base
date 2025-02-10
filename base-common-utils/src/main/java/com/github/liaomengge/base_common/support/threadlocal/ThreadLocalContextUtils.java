@@ -1,7 +1,7 @@
 package com.github.liaomengge.base_common.support.threadlocal;
 
+import com.github.liaomengge.base_common.utils.threadlocal.LyThreadLocalUtil;
 import lombok.experimental.UtilityClass;
-import org.springframework.core.NamedThreadLocal;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,19 +13,27 @@ import java.util.Objects;
 @UtilityClass
 public class ThreadLocalContextUtils {
 
-    private static ThreadLocal<Map<String, Object>> baseThreadLocalContextMap =
-            new NamedThreadLocal("BASE-THREAD-LOCAL-CONTEXT-MAP");
+    private ThreadLocal<Map<String, Object>> BASE_THREAD_LOCAL_CONTEXT_MAP =
+            LyThreadLocalUtil.getNamedThreadLocal("base-thread-local-context", HashMap::new);
+
+    public void put(String key, Object value) {
+        put(getBaseThreadLocalContextMap(), key, value);
+    }
 
     public void put(ThreadLocal<Map<String, Object>> threadLocalMap, String key, Object value) {
         if (Objects.isNull(key)) {
             throw new IllegalArgumentException("key cannot be null");
         }
         Map<String, Object> map = threadLocalMap.get();
-        if (map == null) {
+        if (Objects.isNull(map)) {
             map = new HashMap<>();
             threadLocalMap.set(map);
         }
         map.put(key, value);
+    }
+
+    public void putAll(Map<String, Object> map) {
+        putAll(getBaseThreadLocalContextMap(), map);
     }
 
     public void putAll(ThreadLocal<Map<String, Object>> threadLocalMap, Map<String, Object> map) {
@@ -37,23 +45,35 @@ public class ThreadLocalContextUtils {
         localMap.putAll(map);
     }
 
+    public <T> T get(String key) {
+        return get(getBaseThreadLocalContextMap(), key);
+    }
+
     public <T> T get(ThreadLocal<Map<String, Object>> threadLocalMap, String key) {
         Map<String, Object> map = threadLocalMap.get();
-        if ((map != null) && (key != null)) {
+        if (Objects.nonNull(map) && Objects.nonNull(key)) {
             return (T) map.get(key);
         }
         return null;
+    }
+
+    public Map<String, Object> getAll() {
+        return getAll(getBaseThreadLocalContextMap());
     }
 
     public Map<String, Object> getAll(ThreadLocal<Map<String, Object>> threadLocalMap) {
         return threadLocalMap.get();
     }
 
+    public void remove() {
+        remove(getBaseThreadLocalContextMap());
+    }
+
     public void remove(ThreadLocal<Map<String, Object>> threadLocalMap) {
         threadLocalMap.remove();
     }
 
-    public static ThreadLocal<Map<String, Object>> getBaseThreadLocalContextMap() {
-        return baseThreadLocalContextMap;
+    public ThreadLocal<Map<String, Object>> getBaseThreadLocalContextMap() {
+        return BASE_THREAD_LOCAL_CONTEXT_MAP;
     }
 }

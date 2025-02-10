@@ -2,14 +2,14 @@ package com.github.liaomengge.base_common.feign.interceptor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import feign.Util;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
-import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -17,11 +17,10 @@ import java.util.*;
 /**
  * Created by liaomengge on 2020/8/25.
  */
+@Slf4j
 @AllArgsConstructor
-public class GetPojoRequestInterceptor implements RequestInterceptor {
-
-    private static final Logger log = LyLogger.getInstance(GetPojoRequestInterceptor.class);
-
+public class GetPojoRequestInterceptor implements RequestInterceptor, Ordered {
+    
     private final ObjectMapper objectMapper;
 
     @Override
@@ -62,12 +61,17 @@ public class GetPojoRequestInterceptor implements RequestInterceptor {
             Iterator<Map.Entry<String, JsonNode>> it = jsonNode.fields();
             while (it.hasNext()) {
                 Map.Entry<String, JsonNode> entry = it.next();
-                if (StringUtils.hasText(path)) {
+                if (StringUtils.isNoneBlank(path)) {
                     buildQuery(entry.getValue(), path + "." + entry.getKey(), queries);
                 } else {
                     buildQuery(entry.getValue(), entry.getKey(), queries);
                 }
             }
         }
+    }
+
+    @Override
+    public int getOrder() {
+        return 20;
     }
 }

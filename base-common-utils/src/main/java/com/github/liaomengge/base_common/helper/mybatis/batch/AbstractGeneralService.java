@@ -1,34 +1,32 @@
 package com.github.liaomengge.base_common.helper.mybatis.batch;
 
 import com.github.liaomengge.base_common.helper.mybatis.extension.MapResultHandler;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
-
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.slf4j.Logger;
-
+import org.slf4j.LoggerFactory;
 import tk.mybatis.mapper.common.Mapper;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by liaomengge on 16/6/23.
  */
 public abstract class AbstractGeneralService {
 
-    protected final Logger log = LyLogger.getInstance(AbstractGeneralService.class);
+    protected final Logger log = LoggerFactory.getLogger(AbstractGeneralService.class);
 
-    protected final int segmentNumber = 500;
+    protected final int SEGMENT_NUMBER = 500;
 
-    protected <T> void batchInsertEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clz,
+    protected <T> void batchInsertEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clazz,
                                         List<T> list) {
-        batchInsertEntry(sqlSessionFactory, clz, list, segmentNumber);
+        batchInsertEntry(sqlSessionFactory, clazz, list, SEGMENT_NUMBER);
     }
 
-    protected <T> void batchInsertEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clz,
+    protected <T> void batchInsertEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clazz,
                                         List<T> list, int size) {
         if (CollectionUtils.isEmpty(list) || size <= 0) {
             return;
@@ -36,7 +34,7 @@ public abstract class AbstractGeneralService {
         SqlSession sqlSession = null;
         try {
             sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH, Boolean.FALSE);
-            Mapper<T> mapper = sqlSession.getMapper(clz);
+            Mapper<T> mapper = sqlSession.getMapper(clazz);
             for (int i = 0, maxSize = list.size(); i < maxSize; i++) {
                 T t = list.get(i);
                 mapper.insertSelective(t);
@@ -60,7 +58,7 @@ public abstract class AbstractGeneralService {
     }
 
     protected <T> void batchInsertEntry(SqlSessionFactory sqlSessionFactory, String statement, List<T> list) {
-        batchInsertEntry(sqlSessionFactory, statement, list, segmentNumber);
+        batchInsertEntry(sqlSessionFactory, statement, list, SEGMENT_NUMBER);
     }
 
     protected <T> void batchInsertEntry(SqlSessionFactory sqlSessionFactory, String statement, List<T> list, int size) {
@@ -92,12 +90,12 @@ public abstract class AbstractGeneralService {
         }
     }
 
-    protected <T> void batchUpdateEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clz,
+    protected <T> void batchUpdateEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clazz,
                                         List<T> list) {
-        batchUpdateEntry(sqlSessionFactory, clz, list, segmentNumber);
+        batchUpdateEntry(sqlSessionFactory, clazz, list, SEGMENT_NUMBER);
     }
 
-    protected <T> void batchUpdateEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clz,
+    protected <T> void batchUpdateEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clazz,
                                         List<T> list, int size) {
         if (CollectionUtils.isEmpty(list) || size <= 0) {
             return;
@@ -105,7 +103,7 @@ public abstract class AbstractGeneralService {
         SqlSession sqlSession = null;
         try {
             sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH, Boolean.FALSE);
-            Mapper<T> mapper = sqlSession.getMapper(clz);
+            Mapper<T> mapper = sqlSession.getMapper(clazz);
             for (int i = 0, maxSize = list.size(); i < maxSize; i++) {
                 T t = list.get(i);
                 mapper.updateByPrimaryKeySelective(t);
@@ -129,7 +127,7 @@ public abstract class AbstractGeneralService {
     }
 
     protected <T> void batchUpdateEntry(SqlSessionFactory sqlSessionFactory, String statement, List<T> list) {
-        batchUpdateEntry(sqlSessionFactory, statement, list, segmentNumber);
+        batchUpdateEntry(sqlSessionFactory, statement, list, SEGMENT_NUMBER);
     }
 
     protected <T> void batchUpdateEntry(SqlSessionFactory sqlSessionFactory, String statement, List<T> list,
@@ -162,12 +160,12 @@ public abstract class AbstractGeneralService {
         }
     }
 
-    protected <T> void batchDelEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clz, List<T>
+    protected <T> void batchDelEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clazz, List<T>
             list) {
-        batchDelEntry(sqlSessionFactory, clz, list, segmentNumber);
+        batchDelEntry(sqlSessionFactory, clazz, list, SEGMENT_NUMBER);
     }
 
-    protected <T> void batchDelEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clz, List<T>
+    protected <T> void batchDelEntry(SqlSessionFactory sqlSessionFactory, Class<? extends Mapper<T>> clazz, List<T>
             list, int size) {
         if (CollectionUtils.isEmpty(list) || size <= 0) {
             return;
@@ -175,7 +173,7 @@ public abstract class AbstractGeneralService {
         SqlSession sqlSession = null;
         try {
             sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH, Boolean.FALSE);
-            Mapper<T> mapper = sqlSession.getMapper(clz);
+            Mapper<T> mapper = sqlSession.getMapper(clazz);
             for (int i = 0, maxSize = list.size(); i < maxSize; i++) {
                 T t = list.get(i);
                 mapper.deleteByPrimaryKey(t);
@@ -199,7 +197,7 @@ public abstract class AbstractGeneralService {
     }
 
     protected <T> void batchDelEntry(SqlSessionFactory sqlSessionFactory, String statement, List<T> list) {
-        batchDelEntry(sqlSessionFactory, statement, list, segmentNumber);
+        batchDelEntry(sqlSessionFactory, statement, list, SEGMENT_NUMBER);
     }
 
     protected <T> void batchDelEntry(SqlSessionFactory sqlSessionFactory, String statement, List<T> list, int size) {
@@ -231,7 +229,8 @@ public abstract class AbstractGeneralService {
         }
     }
 
-    protected <T extends Map<?, ?>, K, V> Map<K, V> queryForMap(SqlSessionFactory sqlSessionFactory, String statement, Object parameter,
+    protected <T extends Map<?, ?>, K, V> Map<K, V> queryForMap(SqlSessionFactory sqlSessionFactory, String statement
+            , Object parameter,
                                                                 MapResultHandler<T, K, V> handler) {
         SqlSession sqlSession = null;
         try {
@@ -247,7 +246,8 @@ public abstract class AbstractGeneralService {
         return handler.getMappedResults();
     }
 
-    protected <T extends Map<?, ?>, K, V> Map<K, V> queryForMap(SqlSessionFactory sqlSessionFactory, String statement, MapResultHandler<T, K,
+    protected <T extends Map<?, ?>, K, V> Map<K, V> queryForMap(SqlSessionFactory sqlSessionFactory, String statement
+            , MapResultHandler<T, K,
             V> handler) {
         return this.queryForMap(sqlSessionFactory, statement, null, handler);
     }

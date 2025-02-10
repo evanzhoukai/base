@@ -1,18 +1,14 @@
 package com.github.liaomengge.base_common.utils.retry;
 
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
-
-import org.slf4j.Logger;
-
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Created by liaomengge on 16/10/31.
  */
+@Slf4j
 @UtilityClass
 public class LyIdempotentUtil {
-
-    private final Logger log = LyLogger.getInstance(LyIdempotentUtil.class);
 
     private final int RETRY_NUM = 3;
 
@@ -34,7 +30,7 @@ public class LyIdempotentUtil {
         }
 
         if (reTry < 0) {
-            log.error("重试" + RETRY_NUM + "次,仍执行失败");
+            log.error("重试{}次,仍执行失败", RETRY_NUM);
             helper.doRetryOver();
         }
     }

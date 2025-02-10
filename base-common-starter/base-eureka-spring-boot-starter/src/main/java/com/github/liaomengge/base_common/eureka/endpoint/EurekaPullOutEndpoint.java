@@ -2,10 +2,9 @@ package com.github.liaomengge.base_common.eureka.endpoint;
 
 import com.github.liaomengge.base_common.eureka.consts.EurekaConst;
 import com.github.liaomengge.base_common.utils.error.LyThrowableUtil;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import com.google.common.collect.Maps;
 import com.netflix.appinfo.InstanceInfo;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
@@ -18,11 +17,10 @@ import java.util.Map;
 /**
  * Created by liaomengge on 2020/8/15.
  */
-@Endpoint(id = EurekaConst.PULL_OUT_ENDPOINT)
+@Slf4j
+@Endpoint(id = EurekaConst.EndpointConst.PULL_OUT)
 public class EurekaPullOutEndpoint implements ApplicationContextAware {
-
-    private static final Logger log = LyLogger.getInstance(EurekaPullOutEndpoint.class);
-
+    
     private ApplicationContext applicationContext;
 
     @Override
@@ -39,8 +37,8 @@ public class EurekaPullOutEndpoint implements ApplicationContextAware {
 
             InstanceInfo instanceInfo = eurekaRegistration.getApplicationInfoManager().getInfo();
             eurekaRegistration.getEurekaClient().setStatus(InstanceInfo.InstanceStatus.OUT_OF_SERVICE, instanceInfo);
-            log.info("set service => {}, instance => {}, status => OUT_OF_SERVICE", eurekaRegistration.getServiceId(),
-                    eurekaRegistration.getHost());
+            log.info("set service => {}, instance => {}, metadata => {}, status => OUT_OF_SERVICE",
+                    eurekaRegistration.getServiceId(), eurekaRegistration.getHost(), eurekaRegistration.getMetadata());
             retMap.put("status", instanceInfo.getStatus());
             retMap.put("success", true);
         } catch (Exception e) {

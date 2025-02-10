@@ -2,7 +2,8 @@ package com.github.liaomengge.base_common.influx.helper;
 
 import com.github.liaomengge.base_common.influx.InfluxDBProperties;
 import com.github.liaomengge.base_common.influx.batch.InfluxBatchHandler;
-import lombok.AllArgsConstructor;
+import com.github.liaomengge.base_common.influx.consts.InfluxConst;
+import com.github.liaomengge.base_common.utils.net.LyNetworkUtil;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.springframework.util.CollectionUtils;
@@ -17,11 +18,15 @@ import java.util.stream.Collectors;
 /**
  * Created by liaomengge on 2020/7/21.
  */
-@AllArgsConstructor
 public class InfluxHelper {
 
     private final InfluxDBProperties influxDBProperties;
     private final InfluxBatchHandler influxBatchHandler;
+
+    public InfluxHelper(InfluxDBProperties influxDBProperties, InfluxBatchHandler influxBatchHandler) {
+        this.influxDBProperties = influxDBProperties;
+        this.influxBatchHandler = influxBatchHandler;
+    }
 
     public void write(Map<String, Object> fields) {
         write(new HashMap<>(), fields);
@@ -37,6 +42,7 @@ public class InfluxHelper {
 
     public void write(String measurement, Map<String, String> tags, Map<String, Object> fields) {
         Point.Builder builder = Point.measurement(measurement);
+        builder.tag(InfluxConst.DEFAULT_INSTANCE, LyNetworkUtil.getIpAddress());
         if (!CollectionUtils.isEmpty(tags)) {
             builder.tag(tags);
         }

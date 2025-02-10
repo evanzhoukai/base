@@ -4,10 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.liaomengge.base_common.mq.consts.MQConst;
 import com.github.liaomengge.base_common.mq.domain.MQMessage;
 import com.github.liaomengge.base_common.mq.domain.MessageHeader;
+import com.github.liaomengge.base_common.support.logger.JsonLogger;
 import com.github.liaomengge.base_common.utils.json.LyJacksonUtil;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -20,7 +19,7 @@ import java.util.Objects;
  */
 public abstract class AbstractMQMessageListener<T extends MQMessage> implements MessageListener {
 
-    protected static final Logger log = LyLogger.getInstance(AbstractMQMessageListener.class);
+    protected static final JsonLogger log = JsonLogger.getInstance(AbstractMQMessageListener.class);
 
     protected T parseMessage(Message message) {
         String receiveMsg = this.getText(message);
@@ -30,9 +29,9 @@ public abstract class AbstractMQMessageListener<T extends MQMessage> implements 
             return null;
         }
 
-        Class<T> clz = this.getEntityClass();
-        if (Objects.nonNull(clz)) {
-            return LyJacksonUtil.fromJson(receiveMsg, clz);
+        Class<T> clazz = this.getEntityClass();
+        if (Objects.nonNull(clazz)) {
+            return LyJacksonUtil.fromJson(receiveMsg, clazz);
         }
         TypeReference<T> typeReference = this.getTypeReference();
         if (Objects.nonNull(typeReference)) {

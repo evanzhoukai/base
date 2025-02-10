@@ -1,6 +1,8 @@
 package com.github.liaomengge.base_common.support.extension;
 
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.OrderUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,18 +17,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.OrderUtils;
-
 /**
  * 参照：https://github.com/yu120/neural
  * <p>
  * Created by liaomengge on 2019/10/15.
  */
+@Slf4j
 public class ExtensionLoader<T> {
-
-    private static final Logger log = LyLogger.getInstance(ExtensionLoader.class);
 
     private static final String PREFIX_DEFAULT = "META-INF/";
     private static final String PREFIX_SERVICES = PREFIX_DEFAULT + "services/";
@@ -58,7 +55,8 @@ public class ExtensionLoader<T> {
     public T getExtension() {
         SPI spi = serviceType.getAnnotation(SPI.class);
         if (spi.value().length() == 0) {
-            throw new RuntimeException(serviceType.getName() + ": The default implementation ID(@SPI.value()) is not set");
+            throw new RuntimeException(serviceType.getName() + ": The default implementation ID(@SPI.value()) is not " +
+                    "set");
         }
         return getExtension(spi.value());
     }
@@ -69,14 +67,14 @@ public class ExtensionLoader<T> {
         }
         this.checkInit();
 
-        Class<T> clz = extensionClasses.get(serviceName);
-        if (clz != null) {
+        Class<T> clazz = extensionClasses.get(serviceName);
+        if (clazz != null) {
             try {
                 SPI spi = serviceType.getAnnotation(SPI.class);
                 if (spi.single()) {
-                    return this.getSingletonInstance(clz, serviceName);
+                    return this.getSingletonInstance(clazz, serviceName);
                 }
-                return clz.newInstance();
+                return clazz.newInstance();
             } catch (Exception e) {
                 throw new RuntimeException(serviceType.getName() + ": Error when getExtension ", e);
             }
@@ -84,31 +82,31 @@ public class ExtensionLoader<T> {
         return null;
     }
 
-    private T getSingletonInstance(Class<T> clz, String serviceName) throws InstantiationException,
+    private T getSingletonInstance(Class<T> clazz, String serviceName) throws InstantiationException,
             IllegalAccessException {
         synchronized (singletonInstances) {
             T singleton = singletonInstances.get(serviceName);
             if (singleton == null) {
-                singleton = clz.newInstance();
+                singleton = clazz.newInstance();
                 singletonInstances.put(serviceName, singleton);
             }
             return singleton;
         }
     }
 
-    public void addExtensionClass(Class<T> clz) {
-        if (clz == null) {
+    public void addExtensionClass(Class<T> clazz) {
+        if (clazz == null) {
             return;
         }
 
         checkInit();
-        checkExtensionType(clz);
-        String extensionName = getExtensionName(clz);
+        checkExtensionType(clazz);
+        String extensionName = getExtensionName(clazz);
         synchronized (extensionClasses) {
             if (extensionClasses.containsKey(extensionName)) {
-                throw new RuntimeException(clz.getName() + ": Error spiName already exist " + extensionName);
+                throw new RuntimeException(clazz.getName() + ": Error spiName already exist " + extensionName);
             } else {
-                extensionClasses.put(extensionName, clz);
+                extensionClasses.put(extensionName, clazz);
             }
         }
     }
@@ -142,7 +140,8 @@ public class ExtensionLoader<T> {
         return loader;
     }
 
-    private static synchronized <T> ExtensionLoader<T> initExtensionLoader(Class<T> serviceType, ClassLoader classLoader) {
+    private static synchronized <T> ExtensionLoader<T> initExtensionLoader(Class<T> serviceType,
+                                                                           ClassLoader classLoader) {
         ExtensionLoader<T> loader = (ExtensionLoader<T>) extensionLoaders.get(serviceType);
         if (loader == null) {
             loader = new ExtensionLoader<>(serviceType, classLoader);
@@ -198,30 +197,30 @@ public class ExtensionLoader<T> {
         })).collect(Collectors.toList());
     }
 
-    private void checkExtensionType(Class<T> clz) {
+    private void checkExtensionType(Class<T> clazz) {
         // 1) is public class
-        if (!serviceType.isAssignableFrom(clz)) {
-            throw new RuntimeException(clz.getName() + ": Error is not instanceof " + serviceType.getName());
+        if (!serviceType.isAssignableFrom(clazz)) {
+            throw new RuntimeException(clazz.getName() + ": Error is not instanceof " + serviceType.getName());
         }
 
         // 2) contain public constructor and has not-args constructor
-        Constructor<?>[] constructors = clz.getConstructors();
+        Constructor<?>[] constructors = clazz.getConstructors();
         if (constructors == null || constructors.length == 0) {
-            throw new RuntimeException(clz.getName() + ": Error has no public no-args constructor");
+            throw new RuntimeException(clazz.getName() + ": Error has no public no-args constructor");
         }
 
         for (Constructor<?> constructor : constructors) {
             if (Modifier.isPublic(constructor.getModifiers()) && constructor.getParameterTypes().length == 0) {
-                // 3) check extension clz instanceof Type.class
-                if (!serviceType.isAssignableFrom(clz)) {
-                    throw new RuntimeException(clz.getName() + ": Error is not instanceof " + serviceType.getName());
+                // 3) check extension clazz instanceof Type.class
+                if (!serviceType.isAssignableFrom(clazz)) {
+                    throw new RuntimeException(clazz.getName() + ": Error is not instanceof " + serviceType.getName());
                 }
 
                 return;
             }
         }
 
-        throw new RuntimeException(clz.getName() + ": Error has no public no-args constructor");
+        throw new RuntimeException(clazz.getName() + ": Error has no public no-args constructor");
     }
 
     private ConcurrentMap<String, Class<T>> loadExtensionClasses(String prefix) {
@@ -256,16 +255,16 @@ public class ExtensionLoader<T> {
         ConcurrentMap<String, Class<T>> classMap = new ConcurrentHashMap<>();
         for (String className : classNames) {
             try {
-                Class<T> clz;
+                Class<T> clazz;
                 if (classLoader == null) {
-                    clz = (Class<T>) Class.forName(className);
+                    clazz = (Class<T>) Class.forName(className);
                 } else {
-                    clz = (Class<T>) Class.forName(className, false, classLoader);
+                    clazz = (Class<T>) Class.forName(className, false, classLoader);
                 }
 
-                this.checkExtensionType(clz);
-                String extensionName = this.getExtensionName(clz);
-                classMap.putIfAbsent(extensionName, clz);
+                this.checkExtensionType(clazz);
+                String extensionName = this.getExtensionName(clazz);
+                classMap.putIfAbsent(extensionName, clazz);
             } catch (Exception e) {
                 log.error(serviceType.getName() + ": Error load extension class", e);
             }
@@ -275,9 +274,9 @@ public class ExtensionLoader<T> {
 
     }
 
-    private String getExtensionName(Class<?> clz) {
-        Extension extension = clz.getAnnotation(Extension.class);
-        return (extension != null && !"".equals(extension.value())) ? extension.value() : clz.getSimpleName();
+    private String getExtensionName(Class<?> clazz) {
+        Extension extension = clazz.getAnnotation(Extension.class);
+        return (extension != null && !"".equals(extension.value())) ? extension.value() : clazz.getSimpleName();
     }
 
     private void parseUrl(Class<T> serviceType, URL url, List<String> classNames) throws ServiceConfigurationError {

@@ -2,35 +2,34 @@ package com.github.liaomengge.base_common.apollo.refresh;
 
 import com.ctrip.framework.apollo.model.ConfigChange;
 import com.ctrip.framework.apollo.model.ConfigChangeEvent;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
+import com.github.liaomengge.base_common.apollo.ApolloProperties;
+import com.github.liaomengge.base_common.apollo.consts.ApolloConst;
+import com.github.liaomengge.base_common.apollo.enums.RefreshTypeEnum;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.cloud.context.environment.EnvironmentChangeEvent;
 import org.springframework.cloud.context.scope.refresh.RefreshScope;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 
 /**
  * Created by liaomengge on 2020/8/1.
  */
+@Slf4j
 public class ApolloRefresher implements ApplicationContextAware {
-
-    private static final Logger log = LyLogger.getInstance(ApolloRefresher.class);
-
-    private final String REFRESH_TYPE_KEY = "base.apollo.refresh-type";
 
     private ApplicationContext applicationContext;
 
     private final RefreshScope refreshScope;
+    private final ApolloProperties apolloProperties;
 
-    public ApolloRefresher(RefreshScope refreshScope) {
+    public ApolloRefresher(RefreshScope refreshScope, ApolloProperties apolloProperties) {
         this.refreshScope = refreshScope;
+        this.apolloProperties = apolloProperties;
     }
 
     @Override
@@ -39,31 +38,36 @@ public class ApolloRefresher implements ApplicationContextAware {
     }
 
     public void refresh(ConfigChangeEvent changeEvent) {
-        RefreshType refreshType = getRefreshType(changeEvent);
-        switch (refreshType) {
-            case SCOPE:
-                refreshScope();
-                return;
-            case ALL:
-                refreshProperties(changeEvent);
-                refreshScope();
-                return;
-            case PROPERTIES:
-            default:
-                refreshProperties(changeEvent);
-                return;
+        try {
+            RefreshTypeEnum refreshTypeEnum = getRefreshTypeEnum(changeEvent);
+            Set<String> changeKeys = this.apolloProperties.getRefreshScope().getChangeKeys();
+            switch (refreshTypeEnum) {
+                case SCOPE:
+                    refreshScope(changeKeys);
+                    return;
+                case ALL:
+                    refreshProperties(changeEvent);
+                    refreshScope(changeKeys);
+                    return;
+                case PROPERTIES:
+                default:
+                    refreshProperties(changeEvent);
+                    return;
+            }
+        } catch (Exception e) {
+            log.error("apollo refresh fail", e);
         }
     }
 
-    private RefreshType getRefreshType(ConfigChangeEvent changeEvent) {
+    private RefreshTypeEnum getRefreshTypeEnum(ConfigChangeEvent changeEvent) {
         Set<String> changeKeys = changeEvent.changedKeys();
-        if (CollectionUtils.containsAny(changeKeys, REFRESH_TYPE_KEY)) {
-            ConfigChange configChange = changeEvent.getChange(REFRESH_TYPE_KEY);
+        if (CollectionUtils.containsAny(changeKeys, ApolloConst.REFRESH_TYPE_KEY)) {
+            ConfigChange configChange = changeEvent.getChange(ApolloConst.REFRESH_TYPE_KEY);
             return Optional.ofNullable(configChange).map(ConfigChange::getNewValue)
-                    .map(RefreshType::getRefreshType).orElse(RefreshType.PROPERTIES);
+                    .map(RefreshTypeEnum::getInstance).orElse(RefreshTypeEnum.PROPERTIES);
         }
 
-        return RefreshType.getRefreshType(applicationContext.getEnvironment().getProperty(REFRESH_TYPE_KEY));
+        return RefreshTypeEnum.getInstance(applicationContext.getEnvironment().getProperty(ApolloConst.REFRESH_TYPE_KEY));
     }
 
     private void refreshProperties(ConfigChangeEvent changeEvent) {
@@ -74,23 +78,15 @@ public class ApolloRefresher implements ApplicationContextAware {
         }
     }
 
-    private void refreshScope() {
+    private void refreshScope(Set<String> changeKeys) {
         try {
-            refreshScope.refreshAll();
+            if (CollectionUtils.isEmpty(changeKeys)) {
+                refreshScope.refreshAll();
+                return;
+            }
+            changeKeys.stream().forEach(refreshScope::refresh);
         } catch (Exception e) {
             log.warn("refresh scope fail", e);
-        }
-    }
-
-    public enum RefreshType {
-        PROPERTIES,
-        SCOPE,
-        ALL;
-
-        public static RefreshType getRefreshType(String name) {
-            return Arrays.stream(values())
-                    .filter(val -> StringUtils.equalsIgnoreCase(val.name(), name))
-                    .findFirst().orElse(RefreshType.PROPERTIES);
         }
     }
 }

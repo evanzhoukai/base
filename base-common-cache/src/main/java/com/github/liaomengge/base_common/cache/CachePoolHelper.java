@@ -9,10 +9,9 @@ import com.github.liaomengge.base_common.cache.enums.NotifyTypeEnum;
 import com.github.liaomengge.base_common.cache.redis.RedisCache;
 import com.github.liaomengge.base_common.utils.json.LyJacksonUtil;
 import com.github.liaomengge.base_common.utils.json.LyJsonUtil;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import com.google.common.collect.Maps;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
@@ -21,9 +20,8 @@ import java.util.Objects;
 /**
  * Created by liaomengge on 2019/3/19.
  */
+@Slf4j
 public class CachePoolHelper {
-
-    private static final Logger log = LyLogger.getInstance(CachePoolHelper.class);
 
     private final CaffeineCacheManager caffeineCacheManager;
 
@@ -72,16 +70,16 @@ public class CachePoolHelper {
         return caffeineCacheManager.getCache(region).get(key);
     }
 
-    public <T> T getFromLevel1(String key, Class<T> clz) {
-        return getFromLevel1(caffeineCacheManager.getDefaultRegion(), key, clz);
+    public <T> T getFromLevel1(String key, Class<T> clazz) {
+        return getFromLevel1(caffeineCacheManager.getDefaultRegion(), key, clazz);
     }
 
-    public <T> T getFromLevel1(String region, String key, Class<T> clz) {
+    public <T> T getFromLevel1(String region, String key, Class<T> clazz) {
         String level1Json = getFromLevel1(region, key);
         if (StringUtils.isBlank(level1Json)) {
             return null;
         }
-        return LyJacksonUtil.fromJson(level1Json, clz);
+        return LyJacksonUtil.fromJson(level1Json, clazz);
     }
 
     public String getFromLevel2(String key) {
@@ -91,12 +89,12 @@ public class CachePoolHelper {
         return redisCache.get(key);
     }
 
-    public <T> T getFromLevel2(String key, Class<T> clz) {
+    public <T> T getFromLevel2(String key, Class<T> clazz) {
         String level2Json = getFromLevel2(key);
         if (StringUtils.isBlank(level2Json)) {
             return null;
         }
-        return LyJacksonUtil.fromJson(level2Json, clz);
+        return LyJacksonUtil.fromJson(level2Json, clazz);
     }
 
     public String get(String key) {
@@ -124,7 +122,7 @@ public class CachePoolHelper {
                     }
                     return level2Json;
                 } catch (Exception e) {
-                    log.error("获取一二级缓存region[" + region + "],key[" + key + "]失败", e);
+                    log.error("获取一二级缓存region[{}],key[{}]失败", region, key, e);
                 }
             }
 
@@ -132,16 +130,16 @@ public class CachePoolHelper {
         return level1Json;
     }
 
-    public <T> T get(String key, Class<T> clz) {
-        return get(caffeineCacheManager.getDefaultRegion(), key, clz);
+    public <T> T get(String key, Class<T> clazz) {
+        return get(caffeineCacheManager.getDefaultRegion(), key, clazz);
     }
 
-    public <T> T get(String region, String key, Class<T> clz) {
+    public <T> T get(String region, String key, Class<T> clazz) {
         String json = get(region, key);
         if (StringUtils.isBlank(json)) {
             return null;
         }
-        return LyJacksonUtil.fromJson(json, clz);
+        return LyJacksonUtil.fromJson(json, clazz);
     }
 
     public void setToLevel1(String region, String key, String value) {
@@ -200,7 +198,7 @@ public class CachePoolHelper {
                     CacheDomain.builder().notifyTypeEnum(NotifyTypeEnum.PUT).region(region).key(key).value(value).build();
             sendPubCmd(cacheDomain);
         } catch (Exception e) {
-            log.error("设置一二级缓存region[" + region + "],key[" + key + "]失败", e);
+            log.error("设置一二级缓存region[{}],key[{}]失败", region, key, e);
         }
     }
 
@@ -219,7 +217,7 @@ public class CachePoolHelper {
                     CacheDomain.builder().notifyTypeEnum(NotifyTypeEnum.PUT).region(region).key(key).value(json).build();
             sendPubCmd(cacheDomain);
         } catch (Exception e) {
-            log.error("设置一二级缓存region[" + region + "],key[" + key + "]失败", e);
+            log.error("设置一二级缓存region[{}],key[{}]失败", region, key, e);
         }
     }
 
@@ -237,7 +235,7 @@ public class CachePoolHelper {
                     CacheDomain.builder().notifyTypeEnum(NotifyTypeEnum.PUT).region(region).key(key).value(value).build();
             sendPubCmd(cacheDomain);
         } catch (Exception e) {
-            log.error("设置一二级缓存region[" + region + "],key[" + key + "]失败", e);
+            log.error("设置一二级缓存region[{}],key[{}]失败", region, key, e);
         }
     }
 
@@ -256,7 +254,7 @@ public class CachePoolHelper {
                     CacheDomain.builder().notifyTypeEnum(NotifyTypeEnum.PUT).region(region).key(key).value(json).build();
             sendPubCmd(cacheDomain);
         } catch (Exception e) {
-            log.error("设置一二级缓存region[" + region + "],key[" + key + "]失败", e);
+            log.error("设置一二级缓存region[{}],key[{}]失败", region, key, e);
         }
     }
 
@@ -292,7 +290,7 @@ public class CachePoolHelper {
                     CacheDomain.builder().notifyTypeEnum(NotifyTypeEnum.DEL).region(region).key(key).build();
             sendPubCmd(cacheDomain);
         } catch (Exception e) {
-            log.error("删除一二级缓存region[" + region + "],key[" + key + "]失败", e);
+            log.error("删除一二级缓存region[{}],key[{}]失败", region, key, e);
         }
     }
 
@@ -305,7 +303,7 @@ public class CachePoolHelper {
     }
 
     private void sendPubCmd(CacheDomain cacheDomain) {
-        channel.doPubChannel(LyJsonUtil.toJson4Log(cacheDomain));
+        channel.doPubChannel(LyJsonUtil.toJson(cacheDomain));
     }
 
     @PostConstruct

@@ -3,35 +3,21 @@ package com.github.liaomengge.base_common.utils.date;
 import lombok.experimental.UtilityClass;
 
 import java.time.*;
+import java.time.chrono.ChronoLocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Date;
+
+import static com.github.liaomengge.base_common.utils.date.consts.DateFormatConst.*;
 
 /**
  * Created by liaomengge on 2018/6/2.
  */
 @UtilityClass
 public class LyJdk8DateUtil {
-
-    public final long INTERVAL_UNIT = 1000L;
-
-    public final long MILLISECONDS_SECOND = 1000L;
-    public final long MILLISECONDS_MINUTE = 60000L;
-    public final long MILLISECONDS_HOUR = 3600000L;
-    public final long MILLISECONDS_DAY = 86400000L;
-
-    public final String yyyy_MM_dd_HH_mm_ss_SSS = "yyyy-MM-dd HH:mm:ss.SSS";
-    public final String yyyy_MM_dd_HH_mm_ss = "yyyy-MM-dd HH:mm:ss";
-    public final String yyyy_MM_dd = "yyyy-MM-dd";
-    public final String yyyyMMdd = "yyyyMMdd";
-    public final String yyyy_MM = "yyyy-MM";
-    public final String yyyyMM = "yyyyMM";
-    public final String yyyy = "yyyy";
-    public final String HHmmssSSS = "HHmmssSSS";
-    public final String HHmmss = "HHmmss";
-    public final String HH_mm_ss = "HH:mm:ss";
 
     public final String DATE_PATTERN = yyyy_MM_dd;
     public final String TIME_PATTERN = HH_mm_ss;
@@ -390,7 +376,7 @@ public class LyJdk8DateUtil {
      * @return
      */
     public LocalDateTime getBegin4Date(LocalDateTime localDateTime) {
-        return LocalDateTime.of(localDateTime.toLocalDate(), LocalTime.MIN);
+        return LocalDateTime.of(localDateTime.toLocalDate(), LocalTime.MIDNIGHT);
     }
 
     /**
@@ -430,7 +416,7 @@ public class LyJdk8DateUtil {
      * @return
      */
     public LocalDateTime getBegin4Date(LocalDate localDate) {
-        return LocalDateTime.of(localDate, LocalTime.MIN);
+        return LocalDateTime.of(localDate, LocalTime.MIDNIGHT);
     }
 
     /**
@@ -818,6 +804,43 @@ public class LyJdk8DateUtil {
     /********************************************************
      * 扩展
      *******************************************************/
+
+    /**
+     * 判断 A 的时间是否在 B 的时间 "之后"
+     */
+    public static boolean isAfter(ChronoLocalDateTime<?> self, ChronoLocalDateTime<?> other) {
+        return self.isAfter(other);
+    }
+
+    /**
+     * 判断 A 的时间是否在 B 的时间 "之前"
+     */
+    public static boolean isBefore(ChronoLocalDateTime<?> self, ChronoLocalDateTime<?> other) {
+        return self.isBefore(other);
+    }
+
+    /**
+     * 判断 A 的时间是否与 B 的时间 "相同"
+     *
+     * @return {boolean}
+     */
+    public static boolean isEqual(ChronoLocalDateTime<?> self, ChronoLocalDateTime<?> other) {
+        return self.isEqual(other);
+    }
+
+    /**
+     * 比较2个时间差，跨度比较小
+     */
+    public static Duration between(Temporal startInclusive, Temporal endExclusive) {
+        return Duration.between(startInclusive, endExclusive);
+    }
+
+    /**
+     * 比较2个时间差，跨度比较大，年月日为单位
+     */
+    public static Period between(LocalDate startDate, LocalDate endDate) {
+        return Period.between(startDate, endDate);
+    }
 
     /**
      * 判断日期是否在范围内, 包含相等的日期

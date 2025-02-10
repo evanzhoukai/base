@@ -3,9 +3,8 @@ package com.github.liaomengge.base_common.dayu.sentinel.datasource;
 import com.alibaba.csp.sentinel.datasource.AbstractDataSource;
 import com.alibaba.csp.sentinel.datasource.Converter;
 import com.github.liaomengge.base_common.dayu.sentinel.consts.SentinelConst;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
 import org.springframework.cloud.context.environment.EnvironmentChangeEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.EnvironmentAware;
@@ -17,10 +16,9 @@ import java.util.Optional;
 /**
  * Created by liaomengge on 2019/8/9.
  */
+@Slf4j
 public class GiraffeDataSource<T> extends AbstractDataSource<String, T> implements EnvironmentAware,
         ApplicationListener<EnvironmentChangeEvent> {
-
-    private static final Logger log = LyLogger.getInstance(GiraffeDataSource.class);
 
     private Environment environment;
 
@@ -65,10 +63,10 @@ public class GiraffeDataSource<T> extends AbstractDataSource<String, T> implemen
                         "source", this.rule);
             }
             if (getProperty().updateValue(newValue)) {
-                log.info("[DynamicSentinelProperty] [" + this.rule + "] rule config be updated to: " + newValue);
+                log.info("[DynamicSentinelProperty] [{}] rule config be updated to: {}", this.rule, newValue);
             }
         } catch (Throwable ex) {
-            log.warn("[GiraffeDataSource] Error when loading [" + this.rule + "] rule config", ex);
+            log.warn("[GiraffeDataSource] Error when loading [{}] rule config", this.rule, ex);
         }
     }
 

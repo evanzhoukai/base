@@ -1,14 +1,20 @@
 package com.github.liaomengge.base_common.utils.collection;
 
-import com.github.liaomengge.base_common.utils.json.LyJacksonUtil;
-import com.github.liaomengge.base_common.utils.string.LyStringUtil;
-
 import com.alibaba.fastjson.annotation.JSONField;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.github.liaomengge.base_common.utils.json.LyJacksonUtil;
+import com.github.liaomengge.base_common.utils.string.LyStringUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import lombok.experimental.UtilityClass;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.cglib.beans.BeanMap;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -18,17 +24,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.collections.MapUtils;
-import org.apache.commons.collections4.IterableUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.cglib.beans.BeanMap;
-
-import lombok.experimental.UtilityClass;
 
 /**
  * Created by liaomengge on 16/5/10.
@@ -37,6 +35,19 @@ import lombok.experimental.UtilityClass;
 public class LyMapUtil {
 
     private final String PROPERTY_NAME = "class";
+
+    /**
+     * jdk8 bug https://bugs.openjdk.java.net/browse/JDK-8161372
+     *
+     * @see https://www.jianshu.com/p/6c294df2b88d
+     */
+    public static <K, V> V computeIfAbsent(Map<K, V> map, K key, Function<K, V> mappingFunction) {
+        V value = map.get(key);
+        if (value != null) {
+            return value;
+        }
+        return map.computeIfAbsent(key, mappingFunction);
+    }
 
     /**********************************************Map的集合操作********************************************/
 
@@ -98,7 +109,7 @@ public class LyMapUtil {
      * @param obj
      * @return
      */
-    public Map<String, Object> bean2Map4Cglib(Object obj) {
+    public Map<String, Object> bean2Map4Cglib(Object obj, String... excludePropertyName) {
         if (null == obj) {
             return Maps.newHashMap();
         }
@@ -107,7 +118,9 @@ public class LyMapUtil {
 
         BeanMap beanMap = BeanMap.create(obj);
         for (Object key : beanMap.keySet()) {
-            resultMap.put(LyStringUtil.getValue(key), beanMap.get(key));
+            if (!ArrayUtils.contains(excludePropertyName, LyStringUtil.getValue(key))) {
+                resultMap.put(LyStringUtil.getValue(key), beanMap.get(key));
+            }
         }
         return resultMap;
     }
@@ -259,16 +272,16 @@ public class LyMapUtil {
      * Map 2 Bean 依据指定类型转换
      *
      * @param map
-     * @param clz
+     * @param clazz
      * @param <T>
      * @return
      */
-    public <T> T map2Bean(Map<String, Object> map, Class<T> clz) {
+    public <T> T map2Bean(Map<String, Object> map, Class<T> clazz) {
         if (null == map) {
             return null;
         }
 
-        return LyJacksonUtil.obj2Bean(map, clz);
+        return LyJacksonUtil.obj2Bean(map, clazz);
     }
 
     /**

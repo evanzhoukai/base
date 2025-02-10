@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Created by liaomengge on 2020/8/15.
  */
-@Endpoint(id = NacosConst.PULL_IN_ENDPOINT)
+@Endpoint(id = NacosConst.EndpointConst.PULL_IN)
 public class NacosPullInEndpoint extends AbstractPullEndpoint implements ApplicationContextAware {
 
     private ApplicationContext applicationContext;
@@ -33,17 +33,18 @@ public class NacosPullInEndpoint extends AbstractPullEndpoint implements Applica
     public Map<String, Object> pullIn() {
         Map<String, Object> retMap = Maps.newHashMap();
         try {
-            NacosDiscoveryProperties nacosDiscoveryProperties =
-                    applicationContext.getBean(NacosDiscoveryProperties.class);
             NacosRegistration nacosRegistration = applicationContext.getBean(NacosRegistration.class);
             Instance instance = getNacosInstance(nacosRegistration, true);
+            NacosDiscoveryProperties nacosDiscoveryProperties = nacosRegistration.getNacosDiscoveryProperties();
             NacosServiceManager nacosServiceManager = applicationContext.getBean(NacosServiceManager.class);
             NamingMaintainService namingMaintainService =
                     nacosServiceManager.getNamingMaintainService(nacosDiscoveryProperties.getNacosProperties());
-            namingMaintainService.updateInstance(nacosDiscoveryProperties.getService(), instance);
+            namingMaintainService.updateInstance(nacosDiscoveryProperties.getService(),
+                    nacosDiscoveryProperties.getGroup(), instance);
 
-            log.info("set service => {}, instance => {}, status => Enabled", nacosDiscoveryProperties.getService(),
-                    nacosDiscoveryProperties.getIp());
+            log.info("set service => {}, instance => {}, metadata => {}, status => Enabled",
+                    nacosDiscoveryProperties.getService(), nacosDiscoveryProperties.getIp(),
+                    nacosDiscoveryProperties.getMetadata());
             retMap.put("status", "Enabled");
             retMap.put("success", true);
         } catch (Exception e) {

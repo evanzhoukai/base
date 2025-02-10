@@ -1,23 +1,21 @@
 package com.github.liaomengge.base_common.helper.redis;
 
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import redis.clients.jedis.ScanParams;
+import redis.clients.jedis.ScanResult;
+import redis.clients.jedis.Tuple;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.slf4j.Logger;
-
-import redis.clients.jedis.ScanParams;
-import redis.clients.jedis.ScanResult;
-import redis.clients.jedis.Tuple;
 
 /**
  * Created by liaomengge on 4/2/16.
  */
 public interface IRedisHelper {
 
-    Logger log = LyLogger.getInstance(IRedisHelper.class);
+    Logger log = LoggerFactory.getLogger(IRedisHelper.class);
 
     String LOCK_PREFIX = "lock:";
     String SET_IF_NOT_EXIST = "NX";
@@ -42,13 +40,13 @@ public interface IRedisHelper {
 
     ScanResult<String> scan(String key, ScanParams params);
 
-    void expire(String key, int seconds);
+    void expire(String key, long milliseconds);
 
     Long ttl(String key);
 
     Object eval(String script, List<String> keys, List<String> args);
 
-    boolean lock(String key, String value, long expiredSeconds);
+    boolean lock(String key, String value, long expiredMillis);
 
     boolean unlock(String key, String value);
 
@@ -57,7 +55,7 @@ public interface IRedisHelper {
 
     void set(String key, String value);
 
-    void set(String key, String value, int expiredSeconds);
+    void set(String key, String value, long expiredMillis);
 
     String get(String key);
 
@@ -69,7 +67,7 @@ public interface IRedisHelper {
 
     void hset(String key, String field, String value);
 
-    void hset(String key, String field, String value, int seconds);
+    void hset(String key, String field, String value, long milliseconds);
 
     String hget(String key, String field);
 

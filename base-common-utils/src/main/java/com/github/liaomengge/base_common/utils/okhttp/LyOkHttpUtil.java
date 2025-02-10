@@ -1,35 +1,34 @@
 package com.github.liaomengge.base_common.utils.okhttp;
 
 import com.github.liaomengge.base_common.support.exception.CommunicationException;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
-import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by liaomengge on 2020/8/6.
  */
+@Slf4j
 public class LyOkHttpUtil {
-
-    private static final Logger log = LyLogger.getInstance(LyOkHttpUtil.class);
 
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
 
     private static final int RETRY_TIME = 2;//重试次数
 
-    private static final int CONNECTION_TIME_OUT = 5_000;//连接超时时间
-    private static final int SOCKET_TIME_OUT = 5_000;//读写超时时间
+    private static final long CONNECTION_TIME_OUT = 5_000;//连接超时时间
+    private static final long SOCKET_TIME_OUT = 5_000;//读写超时时间
 
     private static final int MAX_IDLE_CONNECTIONS = 30;// 空闲连接数
-    private static final long KEEP_ALLIVE_TIME = 60_000L;//保持连接时间
+    private static final long KEEP_ALIVE_TIME = 60_000L;//保持连接时间
 
     private static OkHttpClient okHttpClient;
 
     static {
-        ConnectionPool connectionPool = new ConnectionPool(MAX_IDLE_CONNECTIONS, KEEP_ALLIVE_TIME,
+        ConnectionPool connectionPool = new ConnectionPool(MAX_IDLE_CONNECTIONS, KEEP_ALIVE_TIME,
                 TimeUnit.MILLISECONDS);
         okHttpClient = new OkHttpClient.Builder()
                 .connectTimeout(CONNECTION_TIME_OUT, TimeUnit.MILLISECONDS)
@@ -154,15 +153,14 @@ public class LyOkHttpUtil {
     }
 
     private static String execute(Request request, String url) {
-        try {
-            Response response = okHttpClient.newCall(request).execute();
-            if (response.isSuccessful()) {
+        try (Response response = okHttpClient.newCall(request).execute()) {
+            if (response.isSuccessful() && Objects.nonNull(response.body())) {
                 return response.body().string();
             }
             log.warn("http call fail, [url={}, errorCode = {}, message = {}]", url, response.code(),
                     response.message());
         } catch (Throwable t) {
-            log.warn("http call fail, url=> " + url, t);
+            log.warn("http call fail, url=> {}", url, t);
             throw new CommunicationException("http call fail, url=> " + url, t);
         }
         return null;

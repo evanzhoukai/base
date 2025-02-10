@@ -1,16 +1,14 @@
 package com.github.liaomengge.base_common.utils.string;
 
 import com.github.liaomengge.base_common.support.misc.Charsets;
+import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringUtils;
-
-import lombok.experimental.UtilityClass;
 
 /**
  * Created by liaomengge on 17/11/8.
@@ -83,8 +81,6 @@ public class LyStringUtil {
      * 2. 可设定List初始大小.
      * <p>
      * 3. preserveAllTokens 取默认值false
-     *
-     * @return 如果为null返回null, 如果为""返回空数组
      *
      * @param str
      * @param separatorChar
@@ -165,7 +161,7 @@ public class LyStringUtil {
      * @return
      */
     public boolean startWith(CharSequence s, char c) {
-        if (StringUtils.isEmpty(s)) {
+        if (StringUtils.isBlank(s)) {
             return false;
         }
         return s.charAt(0) == c;
@@ -177,7 +173,7 @@ public class LyStringUtil {
      * 如果字符串为Null或空, 返回false
      */
     public boolean endWith(CharSequence s, char c) {
-        if (StringUtils.isEmpty(s)) {
+        if (StringUtils.isBlank(s)) {
             return false;
         }
         return s.charAt(s.length() - 1) == c;
@@ -248,5 +244,43 @@ public class LyStringUtil {
             return new String(arr);
         }
         return str;
+    }
+
+    /**
+     * 去除末尾指定字符
+     *
+     * @param str
+     * @param trailingCharacter
+     * @return
+     */
+    public String trimTrailingCharacter(String str, char trailingCharacter) {
+        if (StringUtils.isBlank(str)) {
+            return str;
+        }
+
+        StringBuilder sb = new StringBuilder(str);
+        while (sb.length() > 0 && sb.charAt(sb.length() - 1) == trailingCharacter) {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 添加末尾指定字符
+     *
+     * @param str
+     * @param trailingCharacter
+     * @return
+     */
+    public String appendTrailingCharacter(String str, char trailingCharacter) {
+        if (StringUtils.isBlank(str)) {
+            return str;
+        }
+
+        StringBuilder sb = new StringBuilder(str);
+        if (sb.length() > 0 && sb.charAt(sb.length() - 1) != trailingCharacter) {
+            sb.append(trailingCharacter);
+        }
+        return sb.toString();
     }
 }

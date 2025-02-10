@@ -3,16 +3,18 @@ package com.github.liaomengge.base_common.rest.template;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.alibaba.fastjson.support.config.FastJsonConfig;
 import com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter;
+import com.github.liaomengge.base_common.helper.rest.interceptor.HeaderHttpRequestInterceptor;
 import com.github.liaomengge.base_common.helper.rest.interceptor.SentinelHttpRequestInterceptor;
 import com.github.liaomengge.base_common.helper.rest.sync.SyncClientTemplate;
 import com.github.liaomengge.base_common.helper.rest.sync.interceptor.HttpHeaderInterceptor;
+import com.github.liaomengge.base_common.helper.rest.sync.keepalive.HttpConnectionKeepAliveStrategy;
 import com.github.liaomengge.base_common.helper.rest.sync.retry.HttpRetryHandler;
 import com.github.liaomengge.base_common.utils.json.LyJacksonUtil;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import com.github.liaomengge.base_common.utils.thread.LyThreadFactoryBuilderUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.http.HttpHost;
@@ -21,7 +23,6 @@ import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -52,12 +53,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by liaomengge on 2018/11/1.
  */
+@Slf4j
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(SyncClientTemplate.class)
 @EnableConfigurationProperties(RestTemplateProperties.class)
 public class RestTemplateAutoConfiguration {
-
-    private static final Logger log = LyLogger.getInstance(RestTemplateAutoConfiguration.class);
 
     private static final String DAYU_SENTINEL_ENABLED = "base.dayu.sentinel.enabled";
     private static final String SPRING_APPLICATION_NAME = "spring.application.name";
@@ -73,9 +73,22 @@ public class RestTemplateAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public HeaderHttpRequestInterceptor headerHttpRequestInterceptor() {
+        return new HeaderHttpRequestInterceptor();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     @ConditionalOnClass(MeterRegistry.class)
     public SentinelHttpRequestInterceptor sentinelHttpRequestInterceptor(MeterRegistry meterRegistry) {
         return new SentinelHttpRequestInterceptor(meterRegistry);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public HttpConnectionKeepAliveStrategy httpConnectionKeepAliveStrategy() {
+        RestTemplateProperties.HttpClientProperties httpClientProperties = this.restTemplateProperties.getHttp();
+        return new HttpConnectionKeepAliveStrategy(httpClientProperties.getKeepAliveTime());
     }
 
     @Bean
@@ -89,7 +102,8 @@ public class RestTemplateAutoConfiguration {
         poolingHttpClientConnectionManager.setDefaultMaxPerRoute(httpClientProperties.getDefaultMaxPerRoute());
         poolingHttpClientConnectionManager.setDefaultSocketConfig(SocketConfig.custom().setSoTimeout(httpClientProperties.getReadTimeout()).build());
 
-        List<RestTemplateProperties.UrlHttpClientProperties> urlHttpClientProperties = httpClientProperties.getUrls();
+        List<RestTemplateProperties.UrlHttpClientProperties> urlHttpClientProperties =
+                httpClientProperties.getUrls();
         if (CollectionUtils.isNotEmpty(urlHttpClientProperties)) {
             urlHttpClientProperties.forEach(val -> {
                 try {
@@ -116,7 +130,9 @@ public class RestTemplateAutoConfiguration {
     @ConditionalOnBean(PoolingHttpClientConnectionManager.class)
     @ConditionalOnMissingBean
     public RestTemplate restTemplate(PoolingHttpClientConnectionManager poolingHttpClientConnectionManager,
-                                     SentinelHttpRequestInterceptor sentinelHttpRequestInterceptor) {
+                                     HeaderHttpRequestInterceptor headerHttpRequestInterceptor,
+                                     SentinelHttpRequestInterceptor sentinelHttpRequestInterceptor,
+                                     HttpConnectionKeepAliveStrategy httpConnectionKeepAliveStrategy) {
         RestTemplateProperties.HttpClientProperties httpClientProperties = this.restTemplateProperties.getHttp();
         RestTemplate restTemplate = new RestTemplate();
 
@@ -124,6 +140,7 @@ public class RestTemplateAutoConfiguration {
 
         HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
         httpClientBuilder.setConnectionManager(poolingHttpClientConnectionManager);
+        httpClientBuilder.setKeepAliveStrategy(httpConnectionKeepAliveStrategy);
         httpClientBuilder.setRetryHandler(retryHandler);
         if (httpClientProperties.isEnabledTraceHeader()) {
             httpClientBuilder.addInterceptorFirst(new HttpHeaderInterceptor());
@@ -150,7 +167,8 @@ public class RestTemplateAutoConfiguration {
         messageConverters.add(new FormHttpMessageConverter());
         messageConverters.add(new ByteArrayHttpMessageConverter());
 
-        StringHttpMessageConverter stringHttpMessageConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
+        StringHttpMessageConverter stringHttpMessageConverter =
+                new StringHttpMessageConverter(StandardCharsets.UTF_8);
         stringHttpMessageConverter.setSupportedMediaTypes(ImmutableList.of(MediaType.valueOf("text/plain;" +
                 "charset=UTF-8")));
         stringHttpMessageConverter.setWriteAcceptCharset(false);
@@ -168,6 +186,7 @@ public class RestTemplateAutoConfiguration {
         if (dayuSentinelEnabled && sentinelProperties.isEnabled()) {
             restTemplate.getInterceptors().add(0, sentinelHttpRequestInterceptor);
         }
+        restTemplate.getInterceptors().add(headerHttpRequestInterceptor);
         return restTemplate;
     }
 

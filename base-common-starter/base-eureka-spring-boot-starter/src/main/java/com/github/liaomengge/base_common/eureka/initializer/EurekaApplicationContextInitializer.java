@@ -1,11 +1,12 @@
 package com.github.liaomengge.base_common.eureka.initializer;
 
+import com.github.liaomengge.base_common.consts.BaseConst;
 import com.github.liaomengge.base_common.eureka.EurekaProperties;
 import com.github.liaomengge.base_common.eureka.consts.EurekaConst;
 import com.github.liaomengge.base_common.eureka.decorator.EurekaServiceRegistryDecorator;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
+import com.github.liaomengge.base_common.utils.date.LyJdk8DateUtil;
 import com.netflix.appinfo.InstanceInfo;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.SpringBootVersion;
@@ -21,11 +22,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Created by liaomengge on 2020/8/15.
  */
+@Slf4j
 public class EurekaApplicationContextInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    private static final Logger log = LyLogger.getInstance(EurekaApplicationContextInitializer.class);
-
-    private AtomicBoolean switchFlow = new AtomicBoolean(false);
+    private AtomicBoolean switchTraffic = new AtomicBoolean(false);
 
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
@@ -41,20 +41,23 @@ public class EurekaApplicationContextInitializer implements ApplicationContextIn
                     EurekaInstanceConfigBean instanceConfigBean = (EurekaInstanceConfigBean) bean;
 
                     EurekaProperties eurekaProperties = applicationContext.getBean(EurekaProperties.class);
-                    if (eurekaProperties.getPull().isEnabled() && switchFlow.compareAndSet(false, true)) {
+                    if (!eurekaProperties.getReceiveTraffic().isEnabled() && switchTraffic.compareAndSet(false, true)) {
                         instanceConfigBean.setInitialStatus(InstanceInfo.InstanceStatus.OUT_OF_SERVICE);
-                        log.info("set init status[OUT_OF_SERVICE] and meta data...");
+                        log.info("set init status[OUT_OF_SERVICE]...");
                     }
 
-                    Map<String, String> metaMap = instanceConfigBean.getMetadataMap();
-                    metaMap.put(EurekaConst.SPRING_BOOT_VERSION,
+                    Map<String, String> metadataMap = instanceConfigBean.getMetadataMap();
+                    metadataMap.put(EurekaConst.MetadataConst.SPRING_BOOT_VERSION,
                             SpringBootVersion.getVersion());
-                    metaMap.put(EurekaConst.SPRING_APPLICATION_NAME,
-                            environment.getProperty(EurekaConst.SPRING_APPLICATION_NAME));
-                    metaMap.put(EurekaConst.SPRING_APPLICATION_CONTEXT_PATH,
-                            environment.getProperty(EurekaConst.SPRING_APPLICATION_CONTEXT_PATH, "/"));
-                    metaMap.put(EurekaConst.SPRING_APPLICATION_SERVER_PORT,
-                            environment.getProperty(EurekaConst.SPRING_APPLICATION_SERVER_PORT));
+                    metadataMap.put(EurekaConst.MetadataConst.SPRING_APPLICATION_NAME,
+                            environment.getProperty(EurekaConst.MetadataConst.SPRING_APPLICATION_NAME));
+                    metadataMap.put(EurekaConst.MetadataConst.APPLICATION_CONTEXT_PATH,
+                            environment.getProperty(EurekaConst.MetadataConst.APPLICATION_CONTEXT_PATH, "/"));
+                    metadataMap.put(EurekaConst.MetadataConst.APPLICATION_SERVER_PORT,
+                            environment.getProperty(EurekaConst.MetadataConst.APPLICATION_SERVER_PORT));
+                    metadataMap.put(EurekaConst.MetadataConst.PRESERVED_REGISTER_TIME,
+                            LyJdk8DateUtil.getNowDate2String());
+                    metadataMap.put(BaseConst.BASE_FRAMEWORK_VERSION_NAME, BaseConst.BASE_FRAMEWORK_VERSION_VALUE);
                 }
                 return bean;
             }

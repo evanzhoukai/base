@@ -1,28 +1,25 @@
 package com.github.liaomengge.base_common.helper.concurrent;
 
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import com.github.liaomengge.base_common.utils.thread.LyThreadFactoryBuilderUtil;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-
-import lombok.Getter;
-import lombok.Setter;
-
 /**
  * Created by liaomengge on 18/1/2.
  */
+@Slf4j
 @Getter
 @Setter
 public class LyThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
 
-    private static final Logger log = LyLogger.getInstance(LyThreadPoolTaskExecutor.class);
     private static final long serialVersionUID = 1180516546843511746L;
 
     private final Object poolSizeMonitor = new Object();
@@ -33,9 +30,9 @@ public class LyThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
 
     private boolean waitForTasksToCompleteOnShutdown = false;
 
-    private int awaitTerminationSeconds = 0;
+    private long awaitTerminationMillis = 0L;
 
-    private int checkInterval = 2;//默认：check时间间隔2s
+    private long checkIntervalMillis = 2000L;//默认：check时间间隔2s
 
     public LyThreadPoolTaskExecutor(String threadName) {
         this.threadName = threadName;
@@ -60,20 +57,21 @@ public class LyThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
         if (Objects.nonNull(executor)) {
             log.info("thread pool[{}] shutdown start...", threadName);
             executor.shutdown();
-            if (this.awaitTerminationSeconds > 0) {
+            if (this.awaitTerminationMillis > 0) {
                 try {
-                    for (long remaining = this.awaitTerminationSeconds; remaining > 0; remaining -= this.checkInterval) {
+                    for (long remaining = this.awaitTerminationMillis; remaining > 0; remaining -= this.checkIntervalMillis) {
                         try {
-                            if (executor.awaitTermination(Math.min(remaining, this.checkInterval), TimeUnit.SECONDS)) {
+                            if (executor.awaitTermination(Math.min(remaining, this.checkIntervalMillis),
+                                    TimeUnit.MILLISECONDS)) {
                                 break;
                             }
                         } catch (InterruptedException e) {
-                            log.warn("Interrupted while waiting for executor [" + threadName + "] to terminate");
+                            log.warn("Interrupted while waiting for executor [{}] to terminate", threadName);
                             Thread.currentThread().interrupt();
                         }
                     }
                 } catch (Exception e) {
-                    log.info("thread pool[" + threadName + "] shutdown exception", e);
+                    log.info("thread pool[{}] shutdown exception", threadName, e);
                 }
             }
             log.info("thread pool[{}] shutdown end...", threadName);
@@ -83,7 +81,7 @@ public class LyThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
     @Override
     public void afterPropertiesSet() {
         super.setWaitForTasksToCompleteOnShutdown(this.waitForTasksToCompleteOnShutdown);
-        super.setAwaitTerminationSeconds(this.awaitTerminationSeconds);
+        super.setAwaitTerminationMillis(this.awaitTerminationMillis);
         if (StringUtils.isNotBlank(threadName)) {
             super.setThreadFactory(LyThreadFactoryBuilderUtil.build(threadName));
         }

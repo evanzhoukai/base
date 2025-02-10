@@ -1,32 +1,27 @@
 package com.github.liaomengge.base_common.helper.retrofit;
 
+import com.alibaba.csp.sentinel.slots.block.AbstractRule;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.github.liaomengge.base_common.support.exception.CommunicationException;
 import com.github.liaomengge.base_common.utils.error.LyExceptionUtil;
 import com.github.liaomengge.base_common.utils.json.LyJacksonUtil;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
-
-import com.alibaba.csp.sentinel.slots.block.AbstractRule;
-import com.alibaba.csp.sentinel.slots.block.BlockException;
-
-import java.io.IOException;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.springframework.retry.support.RetryTemplate;
-
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.ResponseBody;
+import org.springframework.retry.support.RetryTemplate;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import java.io.IOException;
+import java.util.Optional;
+
 /**
  * Created by liaomengge on 2019/3/6.
  */
+@Slf4j
 @AllArgsConstructor
 public class RetrofitHelper {
-
-    private static final Logger log = LyLogger.getInstance(RetrofitHelper.class);
 
     private final RetryTemplate retryTemplate;
 
@@ -53,45 +48,45 @@ public class RetrofitHelper {
 
     /************************************************华丽的分割线*******************************************************/
 
-    public String execute2(Call<ResponseBody> call) {
-        return execute2(call, true);
+    public String executeToString(Call<ResponseBody> call) {
+        return executeToString(call, true);
     }
 
-    public String execute2(Call<ResponseBody> call, boolean retry) {
+    public String executeToString(Call<ResponseBody> call, boolean retry) {
         try {
             Response<ResponseBody> response = retry ? retryTemplate.execute(context -> call.clone().execute()) :
                     call.execute();
-            return extract2(response);
+            return extractToString(response);
         } catch (Throwable t) {
             this.handleThrowable(t);
         }
         return null;
     }
 
-    public <T> T execute2(Call<ResponseBody> call, Class<T> respClass) {
-        return execute2(call, respClass, true);
+    public <T> T executeToString(Call<ResponseBody> call, Class<T> respClass) {
+        return executeToString(call, respClass, true);
     }
 
-    public <T> T execute2(Call<ResponseBody> call, Class<T> respClass, boolean retry) {
+    public <T> T executeToString(Call<ResponseBody> call, Class<T> respClass, boolean retry) {
         try {
             Response<ResponseBody> response = retry ? retryTemplate.execute(context -> call.clone().execute()) :
                     call.execute();
-            return extract2(response, respClass);
+            return extractToString(response, respClass);
         } catch (Throwable t) {
             this.handleThrowable(t);
         }
         return null;
     }
 
-    private String extract2(Response<ResponseBody> response) throws IOException {
+    private String extractToString(Response<ResponseBody> response) throws IOException {
         if (response.isSuccessful()) {
             return response.body().string();
         }
         return response.errorBody().string();
     }
 
-    private <T> T extract2(Response<ResponseBody> response, Class<T> clz) throws IOException {
-        return LyJacksonUtil.fromJson(extract2(response), clz);
+    private <T> T extractToString(Response<ResponseBody> response, Class<T> clazz) throws IOException {
+        return LyJacksonUtil.fromJson(extractToString(response), clazz);
     }
 
     /************************************************华丽的分割线*******************************************************/

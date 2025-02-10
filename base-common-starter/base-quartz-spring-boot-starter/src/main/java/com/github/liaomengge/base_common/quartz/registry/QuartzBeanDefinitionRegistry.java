@@ -1,11 +1,11 @@
 package com.github.liaomengge.base_common.quartz.registry;
 
 import com.github.liaomengge.base_common.quartz.domain.AbstractBaseJob;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -18,7 +18,6 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.core.type.filter.TypeFilter;
-import org.springframework.util.StringUtils;
 
 import java.util.Map;
 import java.util.Objects;
@@ -30,15 +29,14 @@ import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SING
 /**
  * Created by liaomengge on 2019/1/29.
  */
+@Slf4j
 public class QuartzBeanDefinitionRegistry implements EnvironmentAware, ApplicationContextAware,
         BeanDefinitionRegistryPostProcessor {
-
-    private static final Logger log = LyLogger.getInstance(QuartzBeanDefinitionRegistry.class);
 
     private static final String JOB_PKG = "base.quartz.basePackage";
 
     private Environment environment;
-    private static ApplicationContext applicationContext;
+    private static ApplicationContext staticApplicationContext;
     private static Set<String> jobBeanDefinitionSet = Sets.newConcurrentHashSet();
     private static Map<String, Object> jobBeanMap = Maps.newConcurrentMap();
 
@@ -47,13 +45,17 @@ public class QuartzBeanDefinitionRegistry implements EnvironmentAware, Applicati
         this.environment = environment;
     }
 
+    private static void setStaticApplicationContext(ApplicationContext applicationContext) {
+        staticApplicationContext = applicationContext;
+    }
+
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        QuartzBeanDefinitionRegistry.applicationContext = applicationContext;
+        setStaticApplicationContext(applicationContext);
     }
 
     public static ApplicationContext getApplicationContext() {
-        return applicationContext;
+        return staticApplicationContext;
     }
 
     @Override
@@ -82,7 +84,7 @@ public class QuartzBeanDefinitionRegistry implements EnvironmentAware, Applicati
     private String buildBasePackage() {
         String key = JOB_PKG;
         String value = environment.getProperty(key);
-        if (StringUtils.isEmpty(value)) {
+        if (StringUtils.isBlank(value)) {
             key = LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, key);
             value = environment.getProperty(key);
         }
@@ -94,7 +96,7 @@ public class QuartzBeanDefinitionRegistry implements EnvironmentAware, Applicati
     }
 
     public static Map<String, Object> getJobBeanMap() {
-        Map<String, AbstractBaseJob> baseJobMap = applicationContext.getBeansOfType(AbstractBaseJob.class);
+        Map<String, AbstractBaseJob> baseJobMap = staticApplicationContext.getBeansOfType(AbstractBaseJob.class);
         baseJobMap.values().forEach(val -> {
             String className = val.getClass().getName();
             if (jobBeanDefinitionSet.contains(className)) {

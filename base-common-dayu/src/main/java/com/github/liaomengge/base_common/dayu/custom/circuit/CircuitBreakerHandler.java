@@ -7,20 +7,18 @@ import com.github.liaomengge.base_common.dayu.custom.helper.CircuitBreakerRedisH
 import com.github.liaomengge.base_common.support.meter._MeterRegistrys;
 import com.github.liaomengge.base_common.utils.date.LyJdk8DateUtil;
 import com.github.liaomengge.base_common.utils.error.LyThrowableUtil;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
 
 /**
  * Created by liaomengge on 2019/6/26.
  */
+@Slf4j
 @AllArgsConstructor
 public class CircuitBreakerHandler {
-
-    private static final Logger log = LyLogger.getInstance(CircuitBreakerHandler.class);
 
     private MeterRegistry meterRegistry;
     private CircuitBreakerRedisHelper circuitBreakerRedisHelper;
@@ -44,7 +42,7 @@ public class CircuitBreakerHandler {
                     //open status
                     log.warn("Resource[{}], Custom Circuit Open...", resource);
                     _MeterRegistrys.counter(meterRegistry,
-                            CircuitBreakerConst.Metric.CIRCUIT_BREAKER_PREFIX + resource).ifPresent(Counter::increment);
+                            CircuitBreakerConst.MetricConst.CIRCUIT_BREAKER_PREFIX + resource).ifPresent(Counter::increment);
                     return circuitBreaker.fallback();
                 }
                 //half open status
@@ -54,13 +52,12 @@ public class CircuitBreakerHandler {
         } catch (Throwable t) {
             log.warn("Resource[{}], request custom circuit handle failed ==> {}", resource,
                     LyThrowableUtil.getStackTrace(t));
+            circuitBreakerRedisHelper.incrFailureCount(resource);
             if (failureCount >= circuitBreakerRedisHelper.getCircuitBreakerConfig().getFailureThreshold()) {
-                circuitBreakerRedisHelper.getIRedisHelper().set(circuitBreakerRedisHelper.getLatestFailureTimeStr(resource),
+                circuitBreakerRedisHelper.getIRedisHelper().set(circuitBreakerRedisHelper.getLatestFailureTimeKey(resource),
                         String.valueOf(LyJdk8DateUtil.getMilliSecondsTime()));
                 throw t;
             }
-            //todo 是否可以交换下位置
-            circuitBreakerRedisHelper.incrFailureCount(resource);
             throw t;
         }
         return result;

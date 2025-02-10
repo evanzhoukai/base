@@ -13,13 +13,12 @@ import com.alibaba.csp.sentinel.context.ContextUtil;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.github.liaomengge.base_common.dayu.consts.DayuConst;
 import com.github.liaomengge.base_common.support.meter._MeterRegistrys;
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 
@@ -34,9 +33,8 @@ import static com.github.liaomengge.base_common.support.misc.consts.ToolConst.SP
 /**
  * Created by liaomengge on 2019/11/7.
  */
+@Slf4j
 public class SentinelFilter implements Filter, EnvironmentAware {
-
-    private static final Logger log = LyLogger.getInstance(SentinelFilter.class);
 
     private static final String FRAMEWORK_SENTINEL_ENABLED = "base.framework.sentinel.enabled";
 
@@ -88,7 +86,7 @@ public class SentinelFilter implements Filter, EnvironmentAware {
             }
             filterChain.doFilter(request, response);
         } catch (BlockException e) {
-            log.warn("[Sentinel Filter] Block Exception when Origin: " + origin + " enter fall back uri: " + uriTarget, e);
+            log.warn("[Sentinel Filter] Block Exception when Origin: {} enter fall back uri: {}", origin, uriTarget, e);
             WebCallbackManager.getUrlBlockHandler().blocked(httpServletRequest, httpServletResponse, e);
             String finalUriTarget = uriTarget;
             _MeterRegistrys.counter(meterRegistry, DayuConst.METRIC_SENTINEL_BLOCKED_PREFIX + finalUriTarget).ifPresent(Counter::increment);
@@ -117,7 +115,7 @@ public class SentinelFilter implements Filter, EnvironmentAware {
         String origin = StringUtils.EMPTY;
         if (originParser != null) {
             origin = originParser.parseOrigin(request);
-            if (StringUtils.isEmpty(origin)) {
+            if (StringUtils.isBlank(origin)) {
                 return StringUtils.EMPTY;
             }
         }

@@ -1,21 +1,17 @@
 package com.github.liaomengge.base_common.helper.redis.pubsub;
 
-import com.github.liaomengge.base_common.utils.log4j2.LyLogger;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.springframework.data.redis.connection.Message;
-import org.springframework.data.redis.connection.MessageListener;
-
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.MessageListener;
 
 /**
  * Created by liaomengge on 17/9/7.
  */
+@Slf4j
 public abstract class RedisMessageSubscribe implements MessageListener {
-
-    private static final Logger log = LyLogger.getInstance(RedisMessageSubscribe.class);
 
     private static final String[] PUB_REG_EXP = {"*", "?", "[", "]", "\\"};
 
@@ -32,10 +28,10 @@ public abstract class RedisMessageSubscribe implements MessageListener {
         if (this.isSubscribe() && message != null) {
             String subscribeMessage = message.toString();
             if (StringUtils.isBlank(subscribeMessage) || containSpecialChar(subscribeMessage) || overMaxLength(subscribeMessage)) {
-                log.warn("发布的消息[" + subscribeMessage + "]不合法!");
+                log.warn("发布的消息[{}]不合法!", subscribeMessage);
                 return;
             }
-            log.info("发布的消息 ===> " + subscribeMessage);
+            log.info("发布的消息 ===> {}", subscribeMessage);
 
             this.doHandle(subscribeMessage);
         }
